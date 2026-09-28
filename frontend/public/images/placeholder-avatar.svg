@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="BMW AutoSell admin avatar placeholder">
+  <rect width="200" height="200" fill="#e8edf2"/>
+  <circle cx="100" cy="100" r="62" fill="#c3ccd6"/>
+  <circle cx="100" cy="82" r="26" fill="#8b95a1"/>
+  <path d="M100 116c-24 0-42 12-46 30v6h92v-6c-4-18-22-30-46-30z" fill="#8b95a1"/>
+</svg>

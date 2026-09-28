@@ -1,0 +1,385 @@
+{
+  "nav": {
+    "models": "Tous les modèles & configurateur",
+    "electric": "Électrique",
+    "shop": "Acheter en ligne",
+    "more": "Plus sur BMW"
+  },
+  "aria": {
+    "account": "Compte",
+    "cart": "Panier",
+    "favorites": "Favoris",
+    "location": "Localisation",
+    "menu": "Menu",
+    "darkOff": "Passer en thème sombre",
+    "darkOn": "Passer en thème clair",
+    "language": "Choisir la langue",
+    "backToTop": "Haut de page",
+    "searchLocation": "Rechercher un lieu",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
+  },
+  "hero": {
+    "title": "Le nouveau BMW iX5",
+    "subtitle": "Mener avec confiance.",
+    "keepInformed": "Tenez-moi informé",
+    "discover": "Découvrir maintenant",
+    "pauseVideo": "Mettre en pause la vidéo",
+    "resumeVideo": "Reprendre la lecture de la vidéo",
+    "findYour420i": "Trouvez votre BMW 420i M Sport Cabriolet.",
+    "findYour420iAlt": "BMW 420i M Sport Cabriolet"
+  },
+  "common": {
+    "logIn": "Se connecter",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "registerNow": "S'inscrire maintenant",
+    "registering": "Inscription…",
+    "creating": "Création…",
+    "verify": "Vérifier",
+    "verifying": "Vérification…",
+    "confirm": "Confirmer",
+    "continue": "Continuer",
+    "here": "ici.",
+    "password": "Mot de passe",
+    "emailAddress": "Adresse e-mail*",
+    "firstName": "Prénom*",
+    "lastName": "Nom*",
+    "confirmPassword": "Confirmer le mot de passe*",
+    "mandatoryFields": "*Champs obligatoires",
+    "backToRegistration": "Retour à l'inscription",
+    "backHome": "Retour à l'accueil",
+    "discoverNow": "Découvrir maintenant",
+    "requestAnOffer": "Demander une offre",
+    "keepLoggedIn": "Rester connecté",
+    "hcaptcha": "Cette page utilise hCaptcha.",
+    "hcaptchaDetails": "Cette page utilise hCaptcha. Pour plus de détails, veuillez consulter soit",
+    "or": "ou",
+    "setResetPassword": "Définir / Réinitialiser le mot de passe",
+    "dataPrivacy": "Protection des données",
+    "legalNotice": "Mentions légales",
+    "myOrders": "Mes commandes"
+  },
+  "account": {
+    "welcome": "Bienvenue sur My BMW.",
+    "registerBenefits": "Inscrivez-vous et profitez des avantages :",
+    "benefit1": "Sauvegardez vos véhicules et configurations choisis.",
+    "benefit2": "Gérez votre contrat financier.",
+    "benefit3": "Optimisez votre véhicule avec les Services numériques."
+  },
+  "footer": {
+    "legalNotice": "Mentions légales",
+    "privacyPolicy": "Politique de confidentialité",
+    "cookiePolicy": "Politique relative aux cookies",
+    "compliance": "Conformité & signalement",
+    "euBattery": "Règlement européen sur les batteries",
+    "sitemap": "Plan du site",
+    "copyright": "Copyright © BMW AG 2026"
+  },
+  "navDropdowns": {
+    "electric": {
+      "title": "Véhicules électriques",
+      "el1": "BMW électriques",
+      "el2": "BMW Occasions Certifiées électriques",
+      "el3": "Avantages des voitures électriques",
+      "el4": "Coûts des voitures électriques",
+      "el5": "BMW hybrides rechargeables (PHEV)"
+    },
+    "charging": {
+      "title": "Recharge d'une voiture électrique et autonomie",
+      "ch1": "Recharge à domicile",
+      "ch2": "Recharge publique",
+      "ch3": "Technologie batterie BMW",
+      "ch4": "Quelle est l'autonomie d'une BMW électrique ?"
+    }
+  },
+  "banners": {
+    "offer": {
+      "imgAlt": "BMW Série 1 et Série 2 Gran Coupé",
+      "title1": "BMW Série 1 et Série 2",
+      "title2": "offre Gran Coupé.",
+      "p1": "Avec maintenant 1 an d'assurance gratuite et 3 ans d'entretien, plus",
+      "p2": "un TAEG représentatif attractif de 2,9 %."
+    },
+    "newOffer": {
+      "imgAlt": "BMW i3 50 xDrive First Edition",
+      "title": "La nouvelle BMW i3 50 xDrive First Edition.",
+      "p": "Soyez parmi les premiers. Disponible à la commande dès maintenant."
+    },
+    "owner": {
+      "imgAlt": "Annuaire BMW Owners",
+      "title": "Annuaire BMW Owners",
+      "p1": "Tout ce qu'il faut pour votre BMW, au même endroit. De l'entretien",
+      "p2": "aux accessoires, en passant par le financement et les technologies embarquées."
+    }
+  },
+  "map": {
+    "searchPlaceholder": "Saisissez un code postal, une adresse ou un lieu",
+    "searchAria": "Rechercher un lieu",
+    "bookService": "Réserver un entretien"
+  },
+  "pages": {
+    "vehicules": {
+      "title": "Nos véhicules",
+      "desc": "Découvrez notre sélection de véhicules BMW.",
+      "soon": "La liste des véhicules sera bientôt disponible."
+    },
+    "contact": {
+      "title": "Contactez-nous",
+      "desc": "Une question concernant un véhicule ? Contactez BMW Auto Sell."
+    },
+    "login": {
+      "title": "Connexion BMW ID",
+      "noBmwId": "Vous n'avez pas de BMW ID ? Inscrivez-vous",
+      "bmwIdLabel": "BMW ID (adresse e-mail ou numéro de téléphone)",
+      "errors": {
+        "enterBmwId": "Veuillez saisir votre BMW ID.",
+        "incorrect": "BMW ID ou mot de passe incorrect."
+      }
+    },
+    "register": {
+      "activationFailed": "Échec de l'activation",
+      "activationInvalid": "Ce lien d'activation est invalide ou a expiré."
+    },
+    "findCentre": {
+      "title": "Trouvez un Centre BMW.",
+      "f1": "Pour une expérience de réservation de service en ligne plus personnalisée, cliquez",
+      "hereLink": "ici",
+      "f2": "pour vous connecter à votre compte Connected Drive et réserver un entretien pour l'un",
+      "f3": "des véhicules enregistrés dans votre My BMW Garage. Sinon, veuillez",
+      "f4": "trouver votre Centre BMW local via la carte ci-dessous et sélectionner Réserver",
+      "f5": "un entretien ou un rappel.",
+      "noticeNotFound": "Aucun lieu trouvé. Essayez une autre recherche.",
+      "noticeUnavailable": "Recherche indisponible pour le moment. Réessayez plus tard."
+    },
+    "admin": {
+      "title": "Tableau de bord admin",
+      "placeholder": "Le contenu de ce tableau de bord sera développé dans une tâche séparée."
+    }
+  },
+  "otp": {
+    "title": "Vérification de connexion",
+    "sending": "Envoi de votre code de vérification…",
+    "sent": "Un code de vérification a été envoyé à {{maskedEmail}}. Vérifiez votre boîte de réception (et les indésirables).",
+    "invalidCode": "Code invalide ou expiré.",
+    "unableToSend": "Impossible d'envoyer le code. Réessayez.",
+    "resend": "Renvoyer le code",
+    "resendCooldown": "Renvoyer le code ({{cooldown}}s)"
+  },
+  "registerForm": {
+    "title": "Inscription",
+    "alreadyHaveBmwId": "Vous avez déjà un BMW ID ? Connexion",
+    "rule1": "Longueur comprise entre 10 et 40 caractères.",
+    "rule2": "Au moins une lettre minuscule (a-z).",
+    "rule3": "Au moins une lettre majuscule (A-Z).",
+    "rule4": "Au moins un chiffre (0-9).",
+    "rule5": "Au moins un caractère spécial.",
+    "registrationFailed": "Échec de l'inscription. Veuillez réessayer."
+  },
+  "registrationProgress": {
+    "activated": "Votre BMW ID est activé.",
+    "pendingHeadline": "Activez votre BMW ID",
+    "success": "Votre inscription a réussi.",
+    "confirmTitle": "Confirmez votre inscription.",
+    "confirmText1": "Cliquez sur le bouton d'activation dans l'e-mail que nous vous avons envoyé à l'adresse",
+    "confirmText2": "suivante :",
+    "registrationConfirmed": "Inscription confirmée.",
+    "loginTitle": "Connectez-vous avec votre nouveau BMW ID.",
+    "loginText1": "Utilisez votre nouveau BMW ID pour vous connecter. Vous pouvez continuer sur l'appareil sur lequel vous",
+    "loginText2": "avez commencé votre inscription.",
+    "resendEmail": "Renvoyer l'email",
+    "resending": "Envoi…",
+    "resendCooldown": "Renvoyer l'email ({{cooldown}}s)",
+    "resendSent": "Email envoyé. Vérifiez votre boîte de réception (et les indésirables).",
+    "resendFailed": "Impossible d'envoyer l'email. Réessayez dans un instant."
+  },
+  "createAdminForm": {
+    "create": "Créer un compte administrateur",
+    "created": "Compte administrateur créé. Un code de vérification lui sera envoyé par email lors de sa première connexion.",
+    "exists": "Un compte avec cet e-mail existe déjà.",
+    "generic": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "validation": {
+    "firstNameRequired": "Le prénom est obligatoire.",
+    "lastNameRequired": "Le nom est obligatoire.",
+    "emailRequired": "L'adresse e-mail est obligatoire.",
+    "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+    "passwordRequired": "Le mot de passe est obligatoire.",
+    "confirmRequired": "Veuillez confirmer le mot de passe.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas."
+  },
+  "vehicleDetail": {
+    "comingSoon": "Cette page est en cours de réalisation — plus de détails sur ce modèle seront bientôt disponibles.",
+    "backToModels": "Retour à Tous les modèles & configurateur"
+  },
+  "cart": {
+    "loading": "Chargement de votre panier…",
+    "error": "Impossible de charger votre panier. Veuillez réessayer.",
+    "emptyTitle": "Votre panier est vide.",
+    "emptyText": "Découvrez notre gamme et choisissez le véhicule qu'il vous faut.",
+    "browseModels": "Tous les modèles & configurateur",
+    "totalPrice": "Prix total",
+    "payNow": "Payer maintenant",
+    "paying": "Redirection vers le paiement…",
+    "payError": "Impossible de lancer le paiement. Veuillez réessayer.",
+    "disabledPrice": "Prix sur demande — contactez-nous"
+  },
+  "orderConfirmation": {
+    "title": "Merci pour votre achat !",
+    "message": "Votre paiement a été reçu et un reçu a été envoyé à votre adresse e-mail."
+  },
+  "adminOrders": {
+    "totalRevenue": "Revenu total",
+    "ordersThisMonth": "Commandes ce mois-ci",
+    "revenueThisMonth": "Revenu ce mois-ci",
+    "noOrders": "Aucune commande pour le moment.",
+    "loading": "Chargement des commandes…",
+    "error": "Impossible de charger les commandes. Veuillez réessayer.",
+    "date": "Date",
+    "buyer": "Acheteur",
+    "vehicle": "Véhicule",
+    "amount": "Montant",
+    "statusCol": "Statut",
+    "receipt": "Reçu",
+    "action": "Action",
+    "receiptSent": "Envoyé",
+    "receiptNotSent": "Non envoyé",
+    "resend": "Renvoyer le reçu",
+    "resending": "Envoi…",
+    "resendSuccess": "Reçu envoyé.",
+    "resendError": "Impossible d'envoyer le reçu.",
+    "status": {
+      "pending": "En attente",
+      "paid": "Payée",
+      "failed": "Échouée",
+      "expired": "Expirée"
+    }
+  },
+  "allModels": {
+    "subtitle": "Découvrez toute la gamme BMW et configurez le modèle qui vous correspond.",
+    "results_one": "{{count}} modèle",
+    "results_other": "{{count}} modèles",
+    "loading": "Chargement des véhicules…",
+    "error": "Impossible de charger les véhicules. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "newArrival": "Nouveau",
+    "priceOnRequest": "Prix sur demande",
+    "priceFrom": "À partir de",
+    "excludingOptions": "hors options concessionnaire et immatriculation",
+    "buildAndPrice": "Construire & tarifer",
+    "requestOffer": "En savoir plus",
+    "groups": {
+      "electric": "Voitures 100 % électriques ({{count}})",
+      "hybrid": "Voitures hybrides rechargeables ({{count}})",
+      "petrol": "Voitures essence ({{count}})",
+      "diesel": "Voitures diesel ({{count}})",
+      "concept": "Voitures concept ({{count}})",
+      "protection": "Véhicules de protection ({{count}})"
+    },
+    "series": "Série {{series}}",
+    "sidebar": {
+      "filters": "Filtres",
+      "reset": "Réinitialiser",
+      "categories": "Catégories",
+      "series": "Série",
+      "drivetrains": "Motorisations",
+      "performance": "Performances",
+      "mPerformance": "M Performance",
+      "price": "Prix",
+      "priceMin": "Prix minimum",
+      "priceMax": "Prix maximum",
+      "priceHint": "Les véhicules sans prix publié restent visibles.",
+      "noOptions": "Aucune option disponible."
+    },
+    "drivetrains": {
+      "electric": "100 % électrique",
+      "hybrid": "Hybride rechargeable",
+      "petrol": "Essence",
+      "diesel": "Diesel",
+      "concept": "Concept",
+      "protection": "Protection"
+    },
+    "sort": {
+      "label": "Trier",
+      "newArrivals": "Nouveautés",
+      "priceLowToHigh": "Prix : croissant",
+      "priceHighToLow": "Prix : décroissant"
+    },
+    "specs": {
+      "category": "Catégorie",
+      "series": "Série",
+      "drivetrain": "Motorisation",
+      "variant": "Statut du modèle",
+      "currentModel": "Modèle actuel",
+      "performance": "Performances",
+      "mPerformance": "M Performance"
+    },
+    "empty": {
+      "title": "Aucun véhicule trouvé",
+      "text": "Essayez d'ajuster ou de réinitialiser les filtres."
+    },
+    "reviews": {
+      "title": "Avis",
+      "verified": "Acheteur vérifié",
+      "loadMore": "Voir plus",
+      "noReviews": "Aucun avis pour le moment."
+    }
+  },
+  "vehicleForm": {
+    "create": "Ajouter le véhicule",
+    "edit": "Enregistrer les modifications",
+    "creating": "Enregistrement…",
+    "created": "Véhicule ajouté avec succès.",
+    "updated": "Véhicule mis à jour avec succès.",
+    "genericError": "Une erreur est survenue. Veuillez réessayer.",
+    "modelName": "Nom du modèle",
+    "modelNameRequired": "Le nom du modèle est obligatoire.",
+    "category": "Catégorie",
+    "series": "Série",
+    "variantLabel": "Variante",
+    "variantPlaceholder": "ex. Models, M Model",
+    "drivetrain": "Motorisation",
+    "drivetrainElectric": "100 % électrique",
+    "drivetrainHybrid": "Hybride rechargeable",
+    "drivetrainPetrol": "Essence",
+    "drivetrainDiesel": "Diesel",
+    "drivetrainConcept": "Concept",
+    "drivetrainProtection": "Protection",
+    "isNew": "Nouveau",
+    "isMPerformance": "M Performance",
+    "basePrice": "Prix de base (£)",
+    "basePriceHint": "Laissez vide pour « prix à venir ».",
+    "imageUrl": "Image du véhicule",
+    "imagePlaceholder": "PNG, JPG ou WebP — max 5 Mo",
+    "currentImage": "Image actuelle",
+    "imageEditHint": "Laissez vide pour conserver l'image actuelle."
+  },
+  "myOrders": {
+    "title": "Mes commandes",
+    "loading": "Chargement de vos commandes…",
+    "error": "Impossible de charger vos commandes. Veuillez réessayer.",
+    "empty": "Vous n'avez pas encore de commande.",
+    "amount": "Montant",
+    "date": "Date",
+    "leaveReview": "Laisser un avis",
+    "rating": "Note",
+    "commentPlaceholder": "Partagez votre expérience avec le véhicule (facultatif)",
+    "submit": "Envoyer l'avis",
+    "submitting": "Envoi…",
+    "thanks": "Merci ! Votre avis sera publié après validation.",
+    "submitted": "Avis soumis",
+    "reviewError": "Impossible d'envoyer votre avis. Veuillez réessayer.",
+    "status": {
+      "paymentPending": "Paiement en attente",
+      "paymentPaid": "Payée",
+      "paymentFailed": "Paiement échoué",
+      "paymentExpired": "Paiement expiré",
+      "paymentRefunded": "Remboursée",
+      "processingPending": "En préparation",
+      "processingReady": "Prête",
+      "processingDelivered": "Livrée",
+      "processingCancelled": "Annulée"
+    }
+  }
+}

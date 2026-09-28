@@ -1,0 +1,385 @@
+{
+  "nav": {
+    "models": "All Models & Configurator",
+    "electric": "Electric",
+    "shop": "Shop Online",
+    "more": "More BMW"
+  },
+  "aria": {
+    "account": "Account",
+    "cart": "Shopping cart",
+    "favorites": "Favorites",
+    "location": "Location",
+    "menu": "Menu",
+    "darkOff": "Switch to dark theme",
+    "darkOn": "Switch to light theme",
+    "language": "Select language",
+    "backToTop": "Back to top",
+    "searchLocation": "Search location",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "hero": {
+    "title": "The new BMW iX5",
+    "subtitle": "Leading with confidence.",
+    "keepInformed": "Keep me informed",
+    "discover": "Discover now",
+    "pauseVideo": "Pause video",
+    "resumeVideo": "Resume video",
+    "findYour420i": "Find Your BMW 420i M Sport Convertible.",
+    "findYour420iAlt": "BMW 420i M Sport Convertible"
+  },
+  "common": {
+    "logIn": "Log in",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "registerNow": "Register now",
+    "registering": "Registering…",
+    "creating": "Creating…",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "here": "here.",
+    "password": "Password",
+    "emailAddress": "Email address*",
+    "firstName": "First Name*",
+    "lastName": "Last Name*",
+    "confirmPassword": "Confirm password*",
+    "mandatoryFields": "*Mandatory fields",
+    "backToRegistration": "Back to registration",
+    "backHome": "Back to home",
+    "discoverNow": "Discover now",
+    "requestAnOffer": "Request an offer",
+    "keepLoggedIn": "Keep me logged in",
+    "hcaptcha": "This page uses hCaptcha.",
+    "hcaptchaDetails": "This page uses hCaptcha. For more details, please check either",
+    "or": "or",
+    "setResetPassword": "Set / Reset Password",
+    "dataPrivacy": "Data Privacy",
+    "legalNotice": "Legal Notice",
+    "myOrders": "My orders"
+  },
+  "account": {
+    "welcome": "Welcome to My BMW.",
+    "registerBenefits": "Register and take advantage of the benefits:",
+    "benefit1": "Save your chosen vehicles and configurations.",
+    "benefit2": "Manage your financial contract.",
+    "benefit3": "Optimise your vehicle with Digital Services."
+  },
+  "footer": {
+    "legalNotice": "Legal Notice",
+    "privacyPolicy": "Privacy Policy",
+    "cookiePolicy": "Cookie Policy",
+    "compliance": "Compliance & Whistleblowing",
+    "euBattery": "EU Battery Regulation",
+    "sitemap": "Sitemap",
+    "copyright": "Copyright © BMW AG 2026"
+  },
+  "navDropdowns": {
+    "electric": {
+      "title": "Electric Vehicles",
+      "el1": "BMW Electric Cars",
+      "el2": "BMW Approved Used Electric Cars",
+      "el3": "Benefits of Electric Cars",
+      "el4": "Costs of Electric Cars",
+      "el5": "BMW Plug-in Hybrid Cars (PHEV)"
+    },
+    "charging": {
+      "title": "Charging an electric car and range",
+      "ch1": "Home Charging",
+      "ch2": "Public Charging",
+      "ch3": "BMW Battery Technology",
+      "ch4": "What is the range of a BMW Electric Car?"
+    }
+  },
+  "banners": {
+    "offer": {
+      "imgAlt": "BMW 1 Series & 2 Series Gran Coupé",
+      "title1": "The BMW 1 Series & 2 Series",
+      "title2": "Gran Coupé offer.",
+      "p1": "Now with 1 year's free insurance and 3 years' servicing, plus",
+      "p2": "attractive 2.9% APR Representative."
+    },
+    "newOffer": {
+      "imgAlt": "BMW i3 50 xDrive First Edition",
+      "title": "The new BMW i3 50 xDrive First Edition.",
+      "p": "Be one of the first. Now available to order."
+    },
+    "owner": {
+      "imgAlt": "BMW Owner's Directory",
+      "title": "BMW Owner's Directory",
+      "p1": "Everything you need for your BMW, all in one place. From servicing",
+      "p2": "and accessories to finance and in-car technology."
+    }
+  },
+  "map": {
+    "searchPlaceholder": "Enter postcode, address or place name",
+    "searchAria": "Search location",
+    "bookService": "Book A Service"
+  },
+  "pages": {
+    "vehicules": {
+      "title": "Our vehicles",
+      "desc": "Discover our selection of BMW vehicles.",
+      "soon": "The list of vehicles will be available soon."
+    },
+    "contact": {
+      "title": "Contact us",
+      "desc": "A question about a vehicle? Contact BMW Auto Sell."
+    },
+    "login": {
+      "title": "BMW ID Login",
+      "noBmwId": "Don't have a BMW ID? Register",
+      "bmwIdLabel": "BMW ID (email address or phone number)",
+      "errors": {
+        "enterBmwId": "Please enter your BMW ID.",
+        "incorrect": "Incorrect BMW ID or password."
+      }
+    },
+    "register": {
+      "activationFailed": "Activation failed",
+      "activationInvalid": "This activation link is invalid or has expired."
+    },
+    "findCentre": {
+      "title": "Find a BMW Centre.",
+      "f1": "For a more tailored Service Online Booking experience, please click",
+      "hereLink": "here",
+      "f2": "to log into your Connected Drive account and book a service for one",
+      "f3": "of the vehicles saved in your My BMW Garage. Alternatively, please",
+      "f4": "find your local BMW Centre via the map below and select Book A",
+      "f5": "Service or Recall.",
+      "noticeNotFound": "No location found. Try another search.",
+      "noticeUnavailable": "Search unavailable for the moment. Try again later."
+    },
+    "admin": {
+      "title": "Admin dashboard",
+      "placeholder": "This dashboard content will be built in a separate task."
+    }
+  },
+  "otp": {
+    "title": "Sign-in verification",
+    "sending": "Sending your verification code…",
+    "sent": "A verification code was sent to {{maskedEmail}}. Check your inbox (and junk/spam folder).",
+    "invalidCode": "Invalid or expired code.",
+    "unableToSend": "Unable to send the code. Please try again.",
+    "resend": "Resend code",
+    "resendCooldown": "Resend code ({{cooldown}}s)"
+  },
+  "registerForm": {
+    "title": "Registration",
+    "alreadyHaveBmwId": "Already have a BMW ID ? Login",
+    "rule1": "Length between 10 and 40 characters.",
+    "rule2": "Minimum of one lowercase Letter (a-z).",
+    "rule3": "Minimum of one uppercase Letter (A-Z).",
+    "rule4": "Minimum of one Number (0-9).",
+    "rule5": "Minimum of one special character.",
+    "registrationFailed": "Registration failed. Please try again."
+  },
+  "registrationProgress": {
+    "activated": "Your BMW ID is activated.",
+    "pendingHeadline": "Activate your BMW ID",
+    "success": "Your registration was successful.",
+    "confirmTitle": "Confirm your registration.",
+    "confirmText1": "Click on the activation button in the email we sent you to the",
+    "confirmText2": "following address:",
+    "registrationConfirmed": "Registration confirmed.",
+    "loginTitle": "Login with your new BMW ID.",
+    "loginText1": "Use your new BMW ID to log in. You can continue on the device you",
+    "loginText2": "started your registration with.",
+    "resendEmail": "Send email again",
+    "resending": "Sending…",
+    "resendCooldown": "Send email again ({{cooldown}}s)",
+    "resendSent": "Email sent. Check your inbox (and junk/spam).",
+    "resendFailed": "Unable to send the email. Try again in a moment."
+  },
+  "createAdminForm": {
+    "create": "Create admin account",
+    "created": "Admin account created. They'll receive a verification code by email on their first login.",
+    "exists": "An account with this email already exists.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "validation": {
+    "firstNameRequired": "First name is required.",
+    "lastNameRequired": "Last name is required.",
+    "emailRequired": "Email address is required.",
+    "emailInvalid": "Enter a valid email address.",
+    "passwordRequired": "Password is required.",
+    "confirmRequired": "Please confirm the password.",
+    "passwordMismatch": "Passwords do not match."
+  },
+  "vehicleDetail": {
+    "comingSoon": "This page is coming soon — more details about this model will be available here.",
+    "backToModels": "Back to All Models & Configurator"
+  },
+  "cart": {
+    "loading": "Loading your cart…",
+    "error": "Unable to load your cart. Please try again.",
+    "emptyTitle": "Your cart is empty.",
+    "emptyText": "Discover our range and choose the vehicle for you.",
+    "browseModels": "All Models & Configurator",
+    "totalPrice": "Total price",
+    "payNow": "Pay now",
+    "paying": "Redirecting to payment…",
+    "payError": "Unable to start the payment. Please try again.",
+    "disabledPrice": "Price on request — contact us"
+  },
+  "orderConfirmation": {
+    "title": "Thank you for your purchase!",
+    "message": "Your payment has been received and a receipt has been sent to your email address."
+  },
+  "adminOrders": {
+    "totalRevenue": "Total revenue",
+    "ordersThisMonth": "Orders this month",
+    "revenueThisMonth": "Revenue this month",
+    "noOrders": "No orders yet.",
+    "loading": "Loading orders…",
+    "error": "Unable to load orders. Please try again.",
+    "date": "Date",
+    "buyer": "Buyer",
+    "vehicle": "Vehicle",
+    "amount": "Amount",
+    "statusCol": "Status",
+    "receipt": "Receipt",
+    "action": "Action",
+    "receiptSent": "Sent",
+    "receiptNotSent": "Not sent",
+    "resend": "Resend receipt",
+    "resending": "Sending…",
+    "resendSuccess": "Receipt sent.",
+    "resendError": "Unable to send the receipt.",
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired"
+    }
+  },
+  "allModels": {
+    "subtitle": "Discover the full BMW model range and configure the one that suits you.",
+    "results_one": "{{count}} model",
+    "results_other": "{{count}} models",
+    "loading": "Loading vehicles…",
+    "error": "Unable to load the vehicles. Please try again.",
+    "retry": "Retry",
+    "newArrival": "New",
+    "priceOnRequest": "Price on request",
+    "priceFrom": "Starting from",
+    "excludingOptions": "excluding dealer options and registration",
+    "buildAndPrice": "Build & Price",
+    "requestOffer": "Find out more",
+    "groups": {
+      "electric": "Fully Electric Cars ({{count}})",
+      "hybrid": "Plug-in Hybrid Cars ({{count}})",
+      "petrol": "Petrol Cars ({{count}})",
+      "diesel": "Diesel Cars ({{count}})",
+      "concept": "Concept Cars ({{count}})",
+      "protection": "Protection vehicles ({{count}})"
+    },
+    "series": "{{series}} Series",
+    "sidebar": {
+      "filters": "Filters",
+      "reset": "Reset",
+      "categories": "Categories",
+      "series": "Series",
+      "drivetrains": "Drivetrains",
+      "performance": "Performance",
+      "mPerformance": "M Performance",
+      "price": "Price",
+      "priceMin": "Minimum price",
+      "priceMax": "Maximum price",
+      "priceHint": "Vehicles without a published price stay visible.",
+      "noOptions": "No options available."
+    },
+    "drivetrains": {
+      "electric": "Fully Electric",
+      "hybrid": "Plug-in Hybrid",
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "concept": "Concept",
+      "protection": "Protection"
+    },
+    "sort": {
+      "label": "Sort",
+      "newArrivals": "New Arrivals",
+      "priceLowToHigh": "Price: low to high",
+      "priceHighToLow": "Price: high to low"
+    },
+    "specs": {
+      "category": "Category",
+      "series": "Series",
+      "drivetrain": "Drivetrain",
+      "variant": "Model status",
+      "currentModel": "Current model",
+      "performance": "Performance",
+      "mPerformance": "M Performance"
+    },
+    "empty": {
+      "title": "No vehicles found",
+      "text": "Try adjusting or resetting the filters."
+    },
+    "reviews": {
+      "title": "Reviews",
+      "verified": "Verified Buyer",
+      "loadMore": "Load more",
+      "noReviews": "No reviews yet."
+    }
+  },
+  "vehicleForm": {
+    "create": "Add vehicle",
+    "edit": "Save changes",
+    "creating": "Saving…",
+    "created": "Vehicle added successfully.",
+    "updated": "Vehicle updated successfully.",
+    "genericError": "Something went wrong. Please try again.",
+    "modelName": "Model name",
+    "modelNameRequired": "Model name is required.",
+    "category": "Category",
+    "series": "Series",
+    "variantLabel": "Variant",
+    "variantPlaceholder": "e.g. Models, M Model",
+    "drivetrain": "Drivetrain",
+    "drivetrainElectric": "Fully Electric",
+    "drivetrainHybrid": "Plug-in Hybrid",
+    "drivetrainPetrol": "Petrol",
+    "drivetrainDiesel": "Diesel",
+    "drivetrainConcept": "Concept",
+    "drivetrainProtection": "Protection",
+    "isNew": "New arrival",
+    "isMPerformance": "M Performance",
+    "basePrice": "Base price (£)",
+    "basePriceHint": "Leave empty for \"price coming soon\".",
+    "imageUrl": "Vehicle image",
+    "imagePlaceholder": "PNG, JPG or WebP — up to 5 MB",
+    "currentImage": "Current image",
+    "imageEditHint": "Leave empty to keep the current image."
+  },
+  "myOrders": {
+    "title": "My orders",
+    "loading": "Loading your orders…",
+    "error": "Unable to load your orders. Please try again.",
+    "empty": "You don't have any orders yet.",
+    "amount": "Amount",
+    "date": "Date",
+    "leaveReview": "Leave a review",
+    "rating": "Rating",
+    "commentPlaceholder": "Share your experience with the vehicle (optional)",
+    "submit": "Submit review",
+    "submitting": "Sending…",
+    "thanks": "Thanks! Your review will appear once approved.",
+    "submitted": "Review submitted",
+    "reviewError": "Unable to submit your review. Please try again.",
+    "status": {
+      "paymentPending": "Payment pending",
+      "paymentPaid": "Paid",
+      "paymentFailed": "Payment failed",
+      "paymentExpired": "Payment expired",
+      "paymentRefunded": "Refunded",
+      "processingPending": "In preparation",
+      "processingReady": "Ready",
+      "processingDelivered": "Delivered",
+      "processingCancelled": "Cancelled"
+    }
+  }
+}

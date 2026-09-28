@@ -1,0 +1,19 @@
+{
+  "name": "bmwautosell",
+  "version": "1.0.0",
+  "description": "BMW AutoSell - Plateforme de vente de voitures BMW (React + Node.js)",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix backend",
+    "format": "prettier --write \"**/*.{js,jsx,json,css}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,json,css}\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "prettier": "^3.9.7"
+  }
+}
