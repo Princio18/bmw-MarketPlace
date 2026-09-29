@@ -17,7 +17,7 @@ const {
 const { buildActivationLink, sendActivationEmail } = require('../services/activationEmail')
 const { notify } = require('../services/adminNotifications')
 const { ROLES } = require('../roles')
-const { query } = require('../db')
+const { prisma } = require('../db')
 const { isValidEmail, validatePassword } = require('../auth/validation')
 
 function maskEmail(email) {
@@ -42,14 +42,13 @@ async function register(req, res) {
     })
   }
 
-  await query(
-    `DELETE FROM users
-      WHERE LOWER(email) = LOWER($1)
-        AND is_active = FALSE
-        AND activation_expires_at IS NOT NULL
-        AND activation_expires_at < now()`,
-    [email],
-  )
+  await prisma.users.deleteMany({
+    where: {
+      email: { equals: email, mode: 'insensitive' },
+      is_active: false,
+      activation_expires_at: { not: null, lt: new Date() },
+    },
+  })
 
   if (await usersRepo.findByEmail(email)) {
     return res.status(409).json({ error: 'Cette adresse email est déjà utilisée.' })
@@ -86,7 +85,7 @@ async function register(req, res) {
 
     return res.status(201).json(response)
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Cette adresse email est déjà utilisée.' })
     }
     throw err
@@ -133,12 +132,14 @@ async function resendActivation(req, res) {
   }
 
   const activationToken = generateActivationToken()
-  await query(
-    `UPDATE users
-        SET activation_token_hash = $2, activation_expires_at = $3, updated_at = NOW()
-      WHERE id = $1`,
-    [user.id, hashActivationToken(activationToken), getActivationExpiry()],
-  )
+  await prisma.users.update({
+    where: { id: user.id },
+    data: {
+      activation_token_hash: hashActivationToken(activationToken),
+      activation_expires_at: getActivationExpiry(),
+      updated_at: new Date(),
+    },
+  })
 
   const activationLink = buildActivationLink(activationToken)
   sendActivationEmail({ to: user.email, activationLink }).catch((err) =>
@@ -181,11 +182,13 @@ async function login(req, res) {
 async function issueAdminOtp(user) {
   const code = crypto.randomInt(100000, 999999)
   const codeHash = await hashPassword(String(code))
-  await query(
-    `INSERT INTO admin_email_otps (user_id, code_hash, expires_at)
-     VALUES ($1, $2, now() + interval '10 minutes')`,
-    [user.id, codeHash],
-  )
+  await prisma.admin_email_otps.create({
+    data: {
+      user_id: user.id,
+      code_hash: codeHash,
+      expires_at: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  })
   sendAdminOtpEmail({ to: user.email, code }).catch((err) =>
     console.error('[admin-otp] échec envoi email:', err),
   )
@@ -230,13 +233,11 @@ async function otpEmailVerify(req, res) {
     )
     valid = true
   } else {
-    const { rows } = await query(
-      `SELECT id, code_hash FROM admin_email_otps
-        WHERE user_id = $1 AND expires_at > now()
-        ORDER BY created_at DESC LIMIT 1`,
-      [user.id],
-    )
-    row = rows[0]
+    row = await prisma.admin_email_otps.findFirst({
+      where: { user_id: user.id, expires_at: { gt: new Date() } },
+      orderBy: { created_at: 'desc' },
+      select: { id: true, code_hash: true },
+    })
     valid = row ? await bcrypt.compare(String(code), row.code_hash) : false
   }
   if (!valid) {
@@ -244,7 +245,7 @@ async function otpEmailVerify(req, res) {
   }
 
   if (row) {
-    await query('DELETE FROM admin_email_otps WHERE id = $1', [row.id])
+    await prisma.admin_email_otps.delete({ where: { id: row.id } })
   }
   const { token, user: safeUser } = await finalizeLogin(user, req, {
     deviceId: payload.deviceId,
@@ -261,11 +262,14 @@ async function updateProfilePhoto(req, res) {
   if (!file) {
     return res.status(400).json({ error: 'Aucune image reçue.' })
   }
-  await query(
-    `UPDATE users SET profile_photo_data = $2, profile_photo_mime_type = $3, updated_at = NOW()
-      WHERE id = $1`,
-    [req.user.id, file.buffer, file.mimetype],
-  )
+  await prisma.users.update({
+    where: { id: req.user.id },
+    data: {
+      profile_photo_data: file.buffer,
+      profile_photo_mime_type: file.mimetype,
+      updated_at: new Date(),
+    },
+  })
   return res.json({ ok: true })
 }
 
@@ -284,10 +288,10 @@ async function changePassword(req, res) {
   }
 
   const passwordHash = await hashPassword(newPassword)
-  await query(
-    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-    [passwordHash, req.user.id],
-  )
+  await prisma.users.update({
+    where: { id: req.user.id },
+    data: { password_hash: passwordHash, updated_at: new Date() },
+  })
   return res.json({ ok: true })
 }
 

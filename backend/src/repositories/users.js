@@ -1,42 +1,84 @@
-const { query } = require('../db')
+const { prisma } = require('../db')
 const { hashPassword } = require('../auth/passwords')
 const { ROLES } = require('../roles')
 
-const USER_SELECT = `
-  SELECT u.id, u.email, u.first_name, u.last_name, u.password_hash,
-         u.two_factor_secret, u.is_two_factor_enabled, u.is_active,
-         u.activation_expires_at, u.is_super_admin,
-         (u.profile_photo_data IS NOT NULL) AS has_profile_photo,
-         u.created_at, u.deleted_at, r.name AS role
-    FROM users u
-    JOIN roles r ON r.id = u.role_id
-`
+// Sélection identique à l'ancien USER_SELECT (colonnes + rôle + indicateur
+// "has_profile_photo") afin de préserver la forme des objets renvoyés.
+const USER_SELECT = {
+  id: true,
+  email: true,
+  first_name: true,
+  last_name: true,
+  password_hash: true,
+  two_factor_secret: true,
+  is_two_factor_enabled: true,
+  is_active: true,
+  activation_token_hash: true,
+  activation_expires_at: true,
+  is_super_admin: true,
+  profile_photo_data: true,
+  created_at: true,
+  deleted_at: true,
+  role: { select: { name: true } },
+}
+
+function toUserRow(row) {
+  if (!row) return null
+  const { role, profile_photo_data: photo, ...rest } = row
+  return {
+    ...rest,
+    role: role ? role.name : null,
+    has_profile_photo: photo != null,
+  }
+}
 
 async function findById(id) {
-  const { rows } = await query(`${USER_SELECT} WHERE u.id = $1`, [id])
-  return rows[0] || null
+  const row = await prisma.users.findFirst({ where: { id }, select: USER_SELECT })
+  return toUserRow(row)
 }
 
 async function findByEmail(email) {
-  const { rows } = await query(`${USER_SELECT} WHERE LOWER(u.email) = LOWER($1)`, [email])
-  return rows[0] || null
+  const row = await prisma.users.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' } },
+    select: USER_SELECT,
+  })
+  return toUserRow(row)
 }
 
 async function getRoleId(name) {
-  const { rows } = await query('SELECT id FROM roles WHERE name = $1', [name])
-  return rows[0] ? rows[0].id : null
+  const role = await prisma.roles.findFirst({ where: { name }, select: { id: true } })
+  return role ? role.id : null
+}
+
+// Les roles sont des donnees de reference : sur une base neuve ils n'existent
+// pas encore, donc on les cree a la volee (meme approche que
+// adminService.getOrCreateAdminRoleId pour le role admin).
+async function getOrCreateRoleId(name) {
+  const existing = await getRoleId(name)
+  if (existing) return existing
+  try {
+    await prisma.roles.create({ data: { name } })
+  } catch (err) {
+    if (err.code !== 'P2002') throw err
+  }
+  const role = await prisma.roles.findFirst({ where: { name }, select: { id: true } })
+  return role.id
 }
 
 async function createClient({ firstName, lastName, email, password }) {
-  const clientRoleId = await getRoleId(ROLES.CLIENT)
+  const clientRoleId = await getOrCreateRoleId(ROLES.CLIENT)
   const passwordHash = await hashPassword(password)
-  const { rows } = await query(
-    `INSERT INTO users (first_name, last_name, email, password_hash, role_id)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id`,
-    [firstName, lastName, email, passwordHash, clientRoleId],
-  )
-  return findById(rows[0].id)
+  const created = await prisma.users.create({
+    data: {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      password_hash: passwordHash,
+      role_id: clientRoleId,
+    },
+    select: { id: true },
+  })
+  return findById(created.id)
 }
 
 async function createClientWithActivation({
@@ -47,85 +89,86 @@ async function createClientWithActivation({
   activationHash,
   activationExpiresAt,
 }) {
-  const clientRoleId = await getRoleId(ROLES.CLIENT)
+  const clientRoleId = await getOrCreateRoleId(ROLES.CLIENT)
   const passwordHash = await hashPassword(password)
-  const { rows } = await query(
-    `INSERT INTO users (first_name, last_name, email, password_hash, role_id,
-                        activation_token_hash, activation_expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id`,
-    [
-      firstName,
-      lastName,
+  const created = await prisma.users.create({
+    data: {
+      first_name: firstName,
+      last_name: lastName,
       email,
-      passwordHash,
-      clientRoleId,
-      activationHash,
-      activationExpiresAt,
-    ],
-  )
-  return findById(rows[0].id)
+      password_hash: passwordHash,
+      role_id: clientRoleId,
+      activation_token_hash: activationHash,
+      activation_expires_at: activationExpiresAt,
+    },
+    select: { id: true },
+  })
+  return findById(created.id)
 }
 
 async function findByActivationHash(activationHash) {
-  const { rows } = await query(
-    `${USER_SELECT} WHERE u.activation_token_hash = $1`,
-    [activationHash],
-  )
-  return rows[0] || null
+  const row = await prisma.users.findFirst({
+    where: { activation_token_hash: activationHash },
+    select: USER_SELECT,
+  })
+  return toUserRow(row)
 }
 
 async function activateUser(id) {
-  const { rowCount } = await query(
-    `UPDATE users
-        SET is_active = TRUE, activation_token_hash = NULL,
-            activation_expires_at = NULL, updated_at = NOW()
-      WHERE id = $1`,
-    [id],
-  )
-  return rowCount > 0
+  const result = await prisma.users.updateMany({
+    where: { id },
+    data: {
+      is_active: true,
+      activation_token_hash: null,
+      activation_expires_at: null,
+      updated_at: new Date(),
+    },
+  })
+  return result.count > 0
 }
 
 async function setTwoFactorSecret(id, secret) {
-  await query(
-    'UPDATE users SET two_factor_secret = $2, updated_at = NOW() WHERE id = $1',
-    [id, secret],
-  )
+  await prisma.users.updateMany({
+    where: { id },
+    data: { two_factor_secret: secret, updated_at: new Date() },
+  })
 }
 
 async function enableTwoFactor(id) {
-  await query(
-    'UPDATE users SET is_two_factor_enabled = TRUE, updated_at = NOW() WHERE id = $1',
-    [id],
-  )
+  await prisma.users.updateMany({
+    where: { id },
+    data: { is_two_factor_enabled: true, updated_at: new Date() },
+  })
 }
 
 async function updateRole(id, roleName) {
   const roleId = await getRoleId(roleName)
   if (!roleId) return false
-  await query('UPDATE users SET role_id = $2, updated_at = NOW() WHERE id = $1', [id, roleId])
+  await prisma.users.updateMany({
+    where: { id },
+    data: { role_id: roleId, updated_at: new Date() },
+  })
   return true
 }
 
 async function listUsers(limit = 100, role = null) {
-  const roles = []
-  if (limit !== undefined) roles.push(limit)
-  if (role) roles.push(role)
-  const { rows } = await query(
-    `${USER_SELECT} WHERE u.deleted_at IS NULL
-     ${role ? 'AND r.name = $2' : ''}
-     ORDER BY u.created_at DESC LIMIT $1`,
-    roles,
-  )
-  return rows
+  const where = { deleted_at: null }
+  if (role) where.role = { name: role }
+  const rows = await prisma.users.findMany({
+    where,
+    select: USER_SELECT,
+    orderBy: { created_at: 'desc' },
+    take: limit === undefined ? undefined : limit,
+  })
+  return rows.map(toUserRow)
 }
 
 async function softDeleteUser(id) {
-  const { rowCount } = await query(
-    'UPDATE users SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL',
-    [id],
-  )
-  return rowCount > 0
+  const result = await prisma.users.updateMany({
+    where: { id, deleted_at: null },
+    data: { deleted_at: new Date(), updated_at: new Date() },
+  })
+  return result.count > 0
 }
 
 module.exports = {

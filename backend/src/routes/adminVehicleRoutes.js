@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { checkPermission } = require('../middleware/checkPermission')
 const upload = require('../middleware/upload')
@@ -98,11 +98,10 @@ function validateVehicleFields(body, { partial = false } = {}) {
   return { errors, price }
 }
 
-function buildUpdate(body) {
-  const fields = []
-  const values = []
+function buildData(body) {
+  const data = {}
 
-  const setMap = {
+  const fieldMap = {
     modelName: 'model_name',
     category: 'category',
     series: 'series',
@@ -113,23 +112,22 @@ function buildUpdate(body) {
     basePrice: 'base_price',
   }
 
-  for (const [key, column] of Object.entries(setMap)) {
+  for (const [key, field] of Object.entries(fieldMap)) {
     if (body[key] === undefined) continue
-    fields.push(`${column} = $${fields.length + 1}`)
-    values.push(body[key])
+    data[field] = body[key]
   }
 
-  return { fields, values }
+  return data
 }
 
 async function findVehicleById(id) {
-  const { rows } = await query(`${VEHICLE_SELECT} WHERE v.id = $1`, [id])
-  return rows[0] || null
+  const rows = await prisma.$queryRawUnsafe(`${VEHICLE_SELECT} WHERE v.id = $1`, id)
+  return rows.length ? pgSafe(rows[0]) : null
 }
 
 async function listVehicles(req, res) {
-  const { rows } = await query(`${VEHICLE_SELECT} ORDER BY v.created_at DESC`)
-  res.json(rows)
+  const rows = await prisma.$queryRawUnsafe(`${VEHICLE_SELECT} ORDER BY v.created_at DESC`)
+  res.json(pgSafe(rows))
 }
 
 async function createVehicle(req, res) {
@@ -142,28 +140,24 @@ async function createVehicle(req, res) {
     return res.status(400).json({ error: errors.join(' ') })
   }
 
-  const { rows } = await query(
-    `INSERT INTO vehicles
-       (model_name, category, series, variant_label, drivetrain,
-        is_new, is_m_performance, base_price, image_data, image_mime_type, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-     RETURNING id`,
-    [
-      modelName.trim(),
-      category.trim(),
-      series.trim(),
-      variantLabel ?? DEFAULT_VARIANT,
+  const created = await prisma.vehicles.create({
+    data: {
+      model_name: modelName.trim(),
+      category: category.trim(),
+      series: series.trim(),
+      variant_label: variantLabel ?? DEFAULT_VARIANT,
       drivetrain,
-      isNew,
-      isMPerformance,
-      price.value,
-      req.file ? req.file.buffer : null,
-      req.file ? req.file.mimetype : null,
-      req.user.id,
-    ],
-  )
+      is_new: isNew,
+      is_m_performance: isMPerformance,
+      base_price: price.value,
+      image_data: req.file ? req.file.buffer : null,
+      image_mime_type: req.file ? req.file.mimetype : null,
+      created_by: req.user.id,
+    },
+    select: { id: true },
+  })
 
-  const vehicle = await findVehicleById(rows[0].id)
+  const vehicle = await findVehicleById(created.id)
   return res.status(201).json(vehicle)
 }
 
@@ -180,22 +174,18 @@ async function updateVehicle(req, res) {
   }
 
   body.basePrice = price.value
-  const { fields, values } = buildUpdate(body)
+  const data = buildData(body)
 
   // Image : mise à jour UNIQUEMENT si un fichier est fourni (ne jamais
   // écraser l'image existante avec NULL).
   if (req.file) {
-    fields.push('image_data = $' + (fields.length + 1))
-    fields.push('image_mime_type = $' + (fields.length + 2))
-    values.push(req.file.buffer, req.file.mimetype)
+    data.image_data = req.file.buffer
+    data.image_mime_type = req.file.mimetype
   }
 
-  if (fields.length > 0) {
-    values.push(existing.id)
-    await query(
-      `UPDATE vehicles SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${values.length}`,
-      values,
-    )
+  if (Object.keys(data).length > 0) {
+    data.updated_at = new Date()
+    await prisma.vehicles.update({ where: { id: existing.id }, data })
   }
 
   const vehicle = await findVehicleById(existing.id)
@@ -211,24 +201,22 @@ async function getVehicle(req, res) {
 }
 
 async function deleteVehicle(req, res) {
-  const { rowCount } = await query(
-    `UPDATE vehicles SET deleted_at = NOW(), updated_at = NOW()
-      WHERE id = $1 AND deleted_at IS NULL`,
-    [req.params.id],
-  )
-  if (rowCount === 0) {
+  const result = await prisma.vehicles.updateMany({
+    where: { id: req.params.id, deleted_at: null },
+    data: { deleted_at: new Date(), updated_at: new Date() },
+  })
+  if (result.count === 0) {
     return res.status(404).json({ error: 'Véhicule introuvable.' })
   }
   return res.json({ ok: true })
 }
 
 async function restoreVehicle(req, res) {
-  const { rowCount } = await query(
-    `UPDATE vehicles SET deleted_at = NULL, updated_at = NOW()
-      WHERE id = $1 AND deleted_at IS NOT NULL`,
-    [req.params.id],
-  )
-  if (rowCount === 0) {
+  const result = await prisma.vehicles.updateMany({
+    where: { id: req.params.id, deleted_at: { not: null } },
+    data: { deleted_at: null, updated_at: new Date() },
+  })
+  if (result.count === 0) {
     return res.status(404).json({ error: 'Véhicule introuvable ou déjà actif.' })
   }
   const vehicle = await findVehicleById(req.params.id)

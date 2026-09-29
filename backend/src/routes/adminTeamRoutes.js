@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { requireSuperAdmin } = require('../middleware/requireSuperAdmin')
 const { ROLES } = require('../roles')
@@ -25,7 +25,7 @@ const PERMISSION_DEFAULTS = {
 }
 
 async function listTeam(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        u.id,
        u.email,
@@ -42,26 +42,22 @@ async function listTeam(req, res) {
      LEFT JOIN admin_permissions ap ON ap.user_id = u.id
      WHERE u.role_id = ${ADMIN_ROLE} AND u.deleted_at IS NULL
      ORDER BY u.is_super_admin DESC, u.created_at ASC`,
-    [
-      PERMISSION_DEFAULTS.can_manage_vehicles,
-      PERMISSION_DEFAULTS.can_manage_orders,
-      PERMISSION_DEFAULTS.can_process_refunds,
-      PERMISSION_DEFAULTS.can_manage_reviews,
-      PERMISSION_DEFAULTS.can_view_reports,
-      PERMISSION_DEFAULTS.can_manage_clients,
-    ],
+    PERMISSION_DEFAULTS.can_manage_vehicles,
+    PERMISSION_DEFAULTS.can_manage_orders,
+    PERMISSION_DEFAULTS.can_process_refunds,
+    PERMISSION_DEFAULTS.can_manage_reviews,
+    PERMISSION_DEFAULTS.can_view_reports,
+    PERMISSION_DEFAULTS.can_manage_clients,
   )
-  res.json({ team: rows })
+  res.json({ team: pgSafe(rows) })
 }
 
 async function findAdmin(userId) {
-  const { rows } = await query(
-    `SELECT u.id, u.is_super_admin AS "isSuperAdmin"
-       FROM users u
-      WHERE u.id = $1 AND u.role_id = ${ADMIN_ROLE} AND u.deleted_at IS NULL`,
-    [userId],
-  )
-  return rows[0] || null
+  const admin = await prisma.users.findFirst({
+    where: { id: userId, role: { name: 'admin' }, deleted_at: null },
+    select: { id: true, is_super_admin: true },
+  })
+  return admin ? { id: admin.id, isSuperAdmin: admin.is_super_admin } : null
 }
 
 async function updatePermissions(req, res) {
@@ -90,29 +86,28 @@ async function updatePermissions(req, res) {
     return res.status(400).json({ error: 'Au moins une permission doit rester active.' })
   }
 
-  await query(
-    `INSERT INTO admin_permissions (user_id, can_manage_vehicles, can_manage_orders,
-                                    can_process_refunds, can_manage_reviews,
-                                    can_view_reports, can_manage_clients, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, now())
-     ON CONFLICT (user_id) DO UPDATE SET
-       can_manage_vehicles = EXCLUDED.can_manage_vehicles,
-       can_manage_orders = EXCLUDED.can_manage_orders,
-       can_process_refunds = EXCLUDED.can_process_refunds,
-       can_manage_reviews = EXCLUDED.can_manage_reviews,
-       can_view_reports = EXCLUDED.can_view_reports,
-       can_manage_clients = EXCLUDED.can_manage_clients,
-       updated_at = now()`,
-    [
-      target.id,
-      values.can_manage_vehicles,
-      values.can_manage_orders,
-      values.can_process_refunds,
-      values.can_manage_reviews,
-      values.can_view_reports,
-      values.can_manage_clients,
-    ],
-  )
+  await prisma.admin_permissions.upsert({
+    where: { user_id: target.id },
+    create: {
+      user_id: target.id,
+      can_manage_vehicles: values.can_manage_vehicles,
+      can_manage_orders: values.can_manage_orders,
+      can_process_refunds: values.can_process_refunds,
+      can_manage_reviews: values.can_manage_reviews,
+      can_view_reports: values.can_view_reports,
+      can_manage_clients: values.can_manage_clients,
+      updated_at: new Date(),
+    },
+    update: {
+      can_manage_vehicles: values.can_manage_vehicles,
+      can_manage_orders: values.can_manage_orders,
+      can_process_refunds: values.can_process_refunds,
+      can_manage_reviews: values.can_manage_reviews,
+      can_view_reports: values.can_view_reports,
+      can_manage_clients: values.can_manage_clients,
+      updated_at: new Date(),
+    },
+  })
   res.json({ ok: true })
 }
 
@@ -125,11 +120,11 @@ async function promoteUser(req, res) {
     return res.status(400).json({ error: 'Cet utilisateur est déjà un Super Admin.' })
   }
 
-  await query(
-    'UPDATE users SET is_super_admin = TRUE, updated_at = NOW() WHERE id = $1',
-    [target.id],
-  )
-  await query('DELETE FROM admin_permissions WHERE user_id = $1', [target.id])
+  await prisma.users.updateMany({
+    where: { id: target.id },
+    data: { is_super_admin: true, updated_at: new Date() },
+  })
+  await prisma.admin_permissions.deleteMany({ where: { user_id: target.id } })
   res.json({ ok: true })
 }
 

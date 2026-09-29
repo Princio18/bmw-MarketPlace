@@ -1,6 +1,6 @@
 const { Router } = require('express')
 const PDFDocument = require('pdfkit')
-const { query } = require('../db')
+const { prisma } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { checkPermission } = require('../middleware/checkPermission')
 const { ROLES } = require('../roles')
@@ -49,7 +49,7 @@ async function exportOrdersCsv(req, res) {
     conditions.push(`o.created_at < ($${values.length}::date + interval '1 day')`)
   }
 
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        o.id,
        o.created_at AS "date",
@@ -63,7 +63,7 @@ async function exportOrdersCsv(req, res) {
      JOIN vehicles v ON v.id = o.vehicle_id
      ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
      ORDER BY o.created_at DESC`,
-    values,
+    ...values,
   )
 
   const csv = toCsv(
@@ -83,7 +83,7 @@ async function exportOrdersCsv(req, res) {
 }
 
 async function exportVehiclesCsv(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        v.id,
        v.model_name AS "modelName",
@@ -120,7 +120,7 @@ async function exportVehiclesCsv(req, res) {
 }
 
 async function exportRevenuePdf(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS "month",
             COALESCE(SUM(amount), 0)::float8 AS "revenue"
        FROM orders
@@ -150,10 +150,12 @@ async function exportRevenuePdf(req, res) {
     let y = tableTop + 34
     doc.fontSize(11).fillColor('#1a1a1a')
     for (const row of rows) {
-      doc.text(row.month, 48, y).text(row.revenue.toLocaleString('en-GB'), 400, y, {
-        width: 147,
-        align: 'right',
-      })
+      doc
+        .text(row.month, 48, y)
+        .text(row.revenue.toLocaleString('en-GB').replace(/[\u202f\u00a0,]/g, ' '), 400, y, {
+          width: 147,
+          align: 'right',
+        })
       y += 22
     }
 

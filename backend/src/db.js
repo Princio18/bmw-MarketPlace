@@ -1,24 +1,27 @@
 require('dotenv').config()
-const { Pool } = require('pg')
+const { PrismaClient } = require('@prisma/client')
+const { PrismaPg } = require('@prisma/adapter-pg')
 
-function dbConfig() {
-  return {
-    host: process.env.PGHOST || 'localhost',
-    port: Number(process.env.PGPORT) || 5432,
-    user: process.env.PGUSER || 'postgres',
-    password: process.env.PGPASSWORD,
-    database: process.env.PGDATABASE || 'bmwautosell',
-  }
+// Client Prisma unique pour toute l'application, connecté via le driver
+// adapter node-postgres (pg). DATABASE_URL pointe vers la base Neon.
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter })
+
+// Prisma renvoie les colonnes BIGINT (ex. COUNT(*)) sous forme de BigInt, non
+// sérialisable en JSON. PostgreSQL (node-pg) les renvoyait sous forme de
+// chaînes : on reproduit ce format pour rester iso-comportement avec l'API.
+function bigintToString(_key, value) {
+  return typeof value === 'bigint' ? value.toString() : value
 }
 
-const pool = new Pool(dbConfig())
-
-async function query(text, params) {
-  return pool.query(text, params)
+// Rend une valeur (ligne/objet/tableau) sérialisable en JSON à l'identique du
+// comportement historique : BigInt -> chaîne, Decimal -> chaîne (toJSON), etc.
+function pgSafe(value) {
+  return JSON.parse(JSON.stringify(value, bigintToString))
 }
 
-async function closePool() {
-  return pool.end()
+async function closeDb() {
+  return prisma.$disconnect()
 }
 
-module.exports = { pool, query, closePool, dbConfig }
+module.exports = { prisma, pgSafe, closeDb }

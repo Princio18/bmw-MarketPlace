@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const fs = require('fs')
 const path = require('path')
-const { closePool, query } = require('../src/db')
+const { closeDb, prisma } = require('../src/db')
 
 const PUBLIC_ROOT = path.join(__dirname, '..', '..', 'frontend', 'public')
 
@@ -41,47 +41,45 @@ const VEHICLES = [
 ]
 
 async function run() {
-  const { rows } = await query(
-    "SELECT id FROM users WHERE role_id = (SELECT id FROM roles WHERE name = 'admin') ORDER BY created_at ASC LIMIT 1",
-  )
-  if (rows.length === 0) {
+  const admin = await prisma.users.findFirst({
+    where: { role: { name: 'admin' } },
+    orderBy: { created_at: 'asc' },
+    select: { id: true },
+  })
+  if (!admin) {
     console.error("[seed:vehicles] Aucun admin trouvé. Lancez npm run seed:admin d'abord.")
     process.exit(1)
   }
-  const adminId = rows[0].id
+  const adminId = admin.id
 
   let vehiclesInserted = 0
   let vehiclesExisting = 0
 
   for (const v of VEHICLES) {
-    const exists = await query(
-      'SELECT id FROM vehicles WHERE model_name = $1 AND variant_label = $2',
-      [v.modelName, v.variantLabel],
-    )
-    if (exists.rows.length > 0) {
+    const exists = await prisma.vehicles.findFirst({
+      where: { model_name: v.modelName, variant_label: v.variantLabel },
+      select: { id: true },
+    })
+    if (exists) {
       vehiclesExisting += 1
       continue
     }
     const { buffer, mimeType } = readVehicleImage(IMG(v.slug))
-    await query(
-      `INSERT INTO vehicles
-         (model_name, category, series, variant_label, drivetrain,
-          is_new, is_m_performance, base_price, image_data, image_mime_type, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [
-        v.modelName,
-        v.category,
-        v.series,
-        v.variantLabel,
-        v.drivetrain,
-        v.isNew,
-        v.isMPerformance,
-        v.basePrice,
-        buffer,
-        mimeType,
-        adminId,
-      ],
-    )
+    await prisma.vehicles.create({
+      data: {
+        model_name: v.modelName,
+        category: v.category,
+        series: v.series,
+        variant_label: v.variantLabel,
+        drivetrain: v.drivetrain,
+        is_new: v.isNew,
+        is_m_performance: v.isMPerformance,
+        base_price: v.basePrice,
+        image_data: buffer,
+        image_mime_type: mimeType,
+        created_by: adminId,
+      },
+    })
     vehiclesInserted += 1
   }
 
@@ -92,15 +90,15 @@ async function run() {
 
 run()
   .then(async () => {
-    await closePool()
+    await closeDb()
     process.exit(0)
   })
   .catch(async (err) => {
     console.error('[seed:vehicles] Erreur inattendue :', err)
     try {
-      await closePool()
+      await closeDb()
     } catch {
-      // pool déjà fermé
+      // client déjà fermé
     }
     process.exit(1)
   })

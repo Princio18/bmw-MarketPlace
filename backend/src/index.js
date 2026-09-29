@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const { startPurgeJob } = require('./jobs/purgeExpired')
+const { closeDb } = require('./db')
 const { requireJwtSecret } = require('./auth/tokens')
 const authRoutes = require('./routes/auth')
 const usersRoutes = require('./routes/users')
@@ -60,7 +61,19 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur.' })
 })
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
   startPurgeJob()
 })
+
+// Arrêt propre : on laisse les requêtes en cours se terminer puis on ferme
+// proprement le client Prisma (libère le pool de connexions).
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => {
+    console.log(`\n[server] ${signal} reçu, arrêt en cours...`)
+    server.close(async () => {
+      await closeDb()
+      process.exit(0)
+    })
+  })
+}

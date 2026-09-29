@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { checkPermission } = require('../middleware/checkPermission')
 const { ROLES } = require('../roles')
@@ -7,7 +7,7 @@ const { ROLES } = require('../roles')
 const CLIENT_ROLE = "(SELECT id FROM roles WHERE name = 'client')"
 
 async function listClients(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        u.id,
        u.email,
@@ -21,21 +21,21 @@ async function listClients(req, res) {
      GROUP BY u.id
      ORDER BY u.created_at DESC`,
   )
-  res.json({ clients: rows })
+  res.json({ clients: pgSafe(rows) })
 }
 
 async function getClient(req, res) {
   const clientId = req.params.id
 
   const [profile, orders, cart, favorites] = await Promise.all([
-    query(
+    prisma.$queryRawUnsafe(
       `SELECT id, email, first_name AS "firstName", last_name AS "lastName",
               is_active AS "isActive", created_at AS "createdAt"
          FROM users
         WHERE id = $1 AND role_id = ${CLIENT_ROLE} AND deleted_at IS NULL`,
-      [clientId],
+      clientId,
     ),
-    query(
+    prisma.$queryRawUnsafe(
       `SELECT o.id, o.amount::float8 AS "amount", o.currency, o.status,
               o.processing_status AS "processingStatus", o.created_at AS "createdAt",
               v.model_name AS "modelName", v.variant_label AS "variantLabel",
@@ -45,9 +45,9 @@ async function getClient(req, res) {
          JOIN vehicles v ON v.id = o.vehicle_id
         WHERE o.user_id = $1
         ORDER BY o.created_at DESC`,
-      [clientId],
+      clientId,
     ),
-    query(
+    prisma.$queryRawUnsafe(
       `SELECT c.id, c.configuration_data AS "configurationData", c.updated_at AS "updatedAt",
               v.model_name AS "modelName", v.base_price::float8 AS "basePrice",
               '/api/vehicles/' || v.id || '/image' AS "image"
@@ -55,29 +55,29 @@ async function getClient(req, res) {
          JOIN vehicles v ON v.id = c.vehicle_id
         WHERE c.user_id = $1 AND c.is_validated = false AND c.deleted_at IS NULL
         ORDER BY c.updated_at DESC LIMIT 1`,
-      [clientId],
+      clientId,
     ),
-    query(
+    prisma.$queryRawUnsafe(
       `SELECT v.id, v.model_name AS "modelName", v.variant_label AS "variantLabel",
               v.base_price::float8 AS "basePrice",
               '/api/vehicles/' || v.id || '/image' AS "image"
          FROM favorites f
          JOIN vehicles v ON v.id = f.vehicle_id AND v.deleted_at IS NULL
         WHERE f.user_id = $1`,
-      [clientId],
+      clientId,
     ),
   ])
 
-  if (profile.rows.length === 0) {
+  if (profile.length === 0) {
     return res.status(404).json({ error: 'Client introuvable.' })
   }
 
-  res.json({
-    client: profile.rows[0],
-    orders: orders.rows,
-    cart: cart.rows[0] || null,
-    favorites: favorites.rows,
-  })
+  res.json(pgSafe({
+    client: profile[0],
+    orders,
+    cart: cart[0] || null,
+    favorites,
+  }))
 }
 
 const router = Router()

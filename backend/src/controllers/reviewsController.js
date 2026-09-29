@@ -1,4 +1,4 @@
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { notify } = require('../services/adminNotifications')
 
 async function createReview(req, res) {
@@ -15,14 +15,10 @@ async function createReview(req, res) {
     return res.status(400).json({ error: 'commentaire invalide (max 2000 caractères).' })
   }
 
-  const order = (
-    await query(
-      `SELECT id, user_id, vehicle_id, status
-         FROM orders
-        WHERE id = $1`,
-      [orderId],
-    )
-  ).rows[0]
+  const order = await prisma.orders.findFirst({
+    where: { id: orderId },
+    select: { id: true, user_id: true, vehicle_id: true, status: true },
+  })
 
   if (!order || order.user_id !== req.user.id) {
     return res.status(403).json({ error: 'You cannot review this order.' })
@@ -32,13 +28,18 @@ async function createReview(req, res) {
   }
 
   try {
-    await query(
-      `INSERT INTO reviews (user_id, vehicle_id, order_id, rating, comment, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')`,
-      [req.user.id, vehicleId, orderId, parsedRating, comment ?? null],
-    )
+    await prisma.reviews.create({
+      data: {
+        user_id: req.user.id,
+        vehicle_id: vehicleId,
+        order_id: orderId,
+        rating: parsedRating,
+        comment: comment ?? null,
+        status: 'pending',
+      },
+    })
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === 'P2002') {
       return res.status(409).json({ error: 'You already reviewed this order.' })
     }
     throw err
@@ -59,27 +60,31 @@ async function getVehicleReviews(req, res) {
   const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || 10))
   const offset = (page - 1) * pageSize
 
-  const { rows } = await query(
-    `SELECT rating, comment, created_at AS "createdAt"
-       FROM reviews
-      WHERE vehicle_id = $1 AND status = 'published' AND deleted_at IS NULL
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3`,
-    [vehicleId, pageSize, offset],
-  )
-  res.json({ reviews: rows, page, pageSize })
+  const rows = await prisma.reviews.findMany({
+    where: { vehicle_id: vehicleId, status: 'published', deleted_at: null },
+    orderBy: { created_at: 'desc' },
+    skip: offset,
+    take: pageSize,
+    select: { rating: true, comment: true, created_at: true },
+  })
+  const reviews = rows.map((r) => ({
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.created_at,
+  }))
+  res.json({ reviews, page, pageSize })
 }
 
 async function getReviewSummary(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        COALESCE(ROUND(AVG(rating::numeric), 1), 0)::float8 AS "averageRating",
        COUNT(*)::int AS "totalReviews"
        FROM reviews
       WHERE vehicle_id = $1 AND status = 'published' AND deleted_at IS NULL`,
-    [req.params.id],
+    req.params.id,
   )
-  res.json(rows[0])
+  res.json(pgSafe(rows[0]))
 }
 
 async function listAdminReviews(req, res) {
@@ -92,7 +97,7 @@ async function listAdminReviews(req, res) {
     conditions.push(`r.status = $${values.length}`)
   }
 
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        r.id,
        r.order_id AS "orderId",
@@ -108,9 +113,9 @@ async function listAdminReviews(req, res) {
      JOIN vehicles v ON v.id = r.vehicle_id
      WHERE ${conditions.join(' AND ')}
      ORDER BY r.created_at DESC`,
-    values,
+    ...values,
   )
-  res.json({ reviews: rows })
+  res.json({ reviews: pgSafe(rows) })
 }
 
 async function setReviewStatus(req, res) {
@@ -120,22 +125,22 @@ async function setReviewStatus(req, res) {
     return res.status(400).json({ error: `status doit être l'un de : ${allowed.join(', ')}.` })
   }
 
-  const { rowCount } = await query(
-    'UPDATE reviews SET status = $1 WHERE id = $2 AND deleted_at IS NULL',
-    [status, req.params.id],
-  )
-  if (rowCount === 0) {
+  const result = await prisma.reviews.updateMany({
+    where: { id: req.params.id, deleted_at: null },
+    data: { status },
+  })
+  if (result.count === 0) {
     return res.status(404).json({ error: 'Avis introuvable.' })
   }
   return res.json({ ok: true, status })
 }
 
 async function deleteReview(req, res) {
-  const { rowCount } = await query(
-    `UPDATE reviews SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL`,
-    [req.params.id],
-  )
-  if (rowCount === 0) {
+  const result = await prisma.reviews.updateMany({
+    where: { id: req.params.id, deleted_at: null },
+    data: { deleted_at: new Date() },
+  })
+  if (result.count === 0) {
     return res.status(404).json({ error: 'Avis introuvable.' })
   }
   return res.json({ ok: true })

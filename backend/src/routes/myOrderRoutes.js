@@ -1,9 +1,9 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate } = require('../middleware/auth')
 
 async function getMyOrders(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        o.id,
        o.amount::float8 AS "amount",
@@ -23,9 +23,9 @@ async function getMyOrders(req, res) {
      JOIN vehicles v ON v.id = o.vehicle_id
      WHERE o.user_id = $1
      ORDER BY o.created_at DESC`,
-    [req.user.id],
+     req.user.id,
   )
-  res.json({ orders: rows })
+  res.json({ orders: pgSafe(rows) })
 }
 
 const router = Router()

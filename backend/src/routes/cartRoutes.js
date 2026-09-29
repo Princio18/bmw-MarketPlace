@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate } = require('../middleware/auth')
 
 const CART_SELECT = `
@@ -18,20 +18,21 @@ const CART_SELECT = `
 const ACTIVE_CART_CONDITION = `c.user_id = $1 AND c.is_validated = false AND c.deleted_at IS NULL`
 
 async function getActiveCart(userId) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `${CART_SELECT} WHERE ${ACTIVE_CART_CONDITION}
      ORDER BY c.updated_at DESC LIMIT 1`,
-    [userId],
+    userId,
   )
-  return rows[0] || null
+  return rows.length ? pgSafe(rows[0]) : null
 }
 
 async function findVehicleById(id) {
-  const { rows } = await query(
-    `SELECT id, base_price::float8 AS "basePrice" FROM vehicles WHERE id = $1 AND deleted_at IS NULL`,
-    [id],
-  )
-  return rows[0] || null
+  const vehicle = await prisma.vehicles.findFirst({
+    where: { id, deleted_at: null },
+    select: { id: true, base_price: true },
+  })
+  if (!vehicle) return null
+  return { id: vehicle.id, basePrice: vehicle.base_price == null ? null : Number(vehicle.base_price) }
 }
 
 async function getCart(req, res) {
@@ -55,21 +56,25 @@ async function upsertCart(req, res) {
 
   const existing = await getActiveCart(req.user.id)
   if (existing) {
-    await query(
-      `UPDATE carts
-         SET vehicle_id = $1, configuration_data = $2, updated_at = now()
-       WHERE id = $3`,
-      [vehicleId, JSON.stringify(configurationData), existing.id],
-    )
+    await prisma.carts.update({
+      where: { id: existing.id },
+      data: {
+        vehicle_id: vehicleId,
+        configuration_data: configurationData,
+        updated_at: new Date(),
+      },
+    })
     const cart = await getActiveCart(req.user.id)
     return res.status(200).json({ cart })
   }
 
-  await query(
-    `INSERT INTO carts (user_id, vehicle_id, configuration_data)
-     VALUES ($1, $2, $3)`,
-    [req.user.id, vehicleId, JSON.stringify(configurationData)],
-  )
+  await prisma.carts.create({
+    data: {
+      user_id: req.user.id,
+      vehicle_id: vehicleId,
+      configuration_data: configurationData,
+    },
+  })
   const cart = await getActiveCart(req.user.id)
   return res.status(201).json({ cart })
 }

@@ -1,4 +1,4 @@
-const { query } = require('../db')
+const { prisma } = require('../db')
 
 const PERMISSION_KEYS = [
   'can_manage_vehicles',
@@ -22,13 +22,11 @@ function checkPermission(key) {
     }
     let allowed = false
     try {
-      const { rows } = await query(
-        `SELECT ${key} AS allowed
-           FROM admin_permissions
-          WHERE user_id = $1`,
-        [req.user.id],
-      )
-      allowed = rows.length > 0 && rows[0].allowed === true
+      const row = await prisma.admin_permissions.findUnique({
+        where: { user_id: req.user.id },
+        select: { [key]: true },
+      })
+      allowed = row != null && row[key] === true
     } catch {
       allowed = false
     }

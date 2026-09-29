@@ -1,12 +1,12 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { ROLES } = require('../roles')
 
 const CLIENT_ROLE = "(SELECT id FROM roles WHERE name = 'client')"
 
 async function getSummary(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        COALESCE(SUM(amount) FILTER (WHERE status = 'paid'), 0)::float8 AS "totalRevenue",
        COALESCE(SUM(amount) FILTER (WHERE status = 'paid'
@@ -23,11 +23,11 @@ async function getSummary(req, res) {
          WHERE status = 'pending' AND deleted_at IS NULL) AS "pendingReviewsCount"
      FROM orders`,
   )
-  res.json(rows[0])
+  res.json(pgSafe(rows[0]))
 }
 
 async function getRevenueByMonth(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS "month",
             COALESCE(SUM(amount), 0)::float8 AS "revenue"
        FROM orders
@@ -47,7 +47,7 @@ async function getRevenueByMonth(req, res) {
 }
 
 async function getOrdersByDrivetrain(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT v.drivetrain, COUNT(*)::int AS "count"
        FROM orders o
        JOIN vehicles v ON v.id = o.vehicle_id
@@ -55,12 +55,12 @@ async function getOrdersByDrivetrain(req, res) {
       GROUP BY v.drivetrain
       ORDER BY "count" DESC`,
   )
-  res.json({ rows })
+  res.json({ rows: pgSafe(rows) })
 }
 
 async function getRecentActivity(req, res) {
   const [orders, clients] = await Promise.all([
-    query(
+    prisma.$queryRawUnsafe(
       `SELECT o.id, u.email AS "email", o.amount::float8 AS "amount",
               o.created_at AS "date"
          FROM orders o
@@ -69,7 +69,7 @@ async function getRecentActivity(req, res) {
         ORDER BY o.created_at DESC
         LIMIT 5`,
     ),
-    query(
+    prisma.$queryRawUnsafe(
       `SELECT id, email, created_at AS "date"
          FROM users
         WHERE role_id = ${CLIENT_ROLE} AND is_active = TRUE AND deleted_at IS NULL
@@ -79,12 +79,12 @@ async function getRecentActivity(req, res) {
   ])
 
   const activity = [
-    ...orders.rows.map((o) => ({
+    ...orders.map((o) => ({
       type: 'order',
       date: o.date,
       label: `Commande payée — ${o.email} (${o.amount} GBP)`,
     })),
-    ...clients.rows.map((u) => ({
+    ...clients.map((u) => ({
       type: 'client',
       date: u.date,
       label: `Nouveau client confirmé — ${u.email}`,

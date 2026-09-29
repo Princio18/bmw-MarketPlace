@@ -1,6 +1,6 @@
 const { signAccessToken } = require('../auth/tokens')
 const { sendLoginAlertEmail } = require('./loginAlertEmail')
-const { query } = require('../db')
+const { prisma } = require('../db')
 const geoip = require('geoip-lite')
 const UAParser = require('ua-parser-js')
 
@@ -8,14 +8,18 @@ async function publicUser(user) {
   let permissions = null
   if (user.role === 'admin' && !user.is_super_admin) {
     try {
-      const { rows } = await query(
-        `SELECT can_manage_vehicles, can_manage_orders, can_process_refunds,
-                can_manage_reviews, can_view_reports, can_manage_clients
-           FROM admin_permissions
-          WHERE user_id = $1`,
-        [user.id],
-      )
-      permissions = rows[0] || null
+      const row = await prisma.admin_permissions.findFirst({
+        where: { user_id: user.id },
+        select: {
+          can_manage_vehicles: true,
+          can_manage_orders: true,
+          can_process_refunds: true,
+          can_manage_reviews: true,
+          can_view_reports: true,
+          can_manage_clients: true,
+        },
+      })
+      permissions = row || null
     } catch {
       permissions = null
     }
@@ -47,26 +51,29 @@ async function finalizeLogin(user, req, opts = {}) {
   const { deviceId = '' } = req.body || {}
   const finalDeviceId = typeof opts.deviceId === 'string' ? opts.deviceId : deviceId
   try {
-    const { rows } = await query(
-      'SELECT id FROM known_devices WHERE user_id = $1 AND device_id = $2',
-      [user.id, finalDeviceId],
-    )
+    const existing = await prisma.known_devices.findFirst({
+      where: { user_id: user.id, device_id: finalDeviceId },
+      select: { id: true },
+    })
 
-    if (rows.length === 0) {
-      await query(
-        `INSERT INTO known_devices (user_id, device_id, device_label, last_ip, last_location)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [user.id, finalDeviceId, device, ip, location],
-      )
+    if (!existing) {
+      await prisma.known_devices.create({
+        data: {
+          user_id: user.id,
+          device_id: finalDeviceId,
+          device_label: device,
+          last_ip: ip,
+          last_location: location,
+        },
+      })
       sendLoginAlertEmail({ to: user.email, device, location, loginDate }).catch(
         (err) => console.error('[login-alert] échec envoi email:', err),
       )
     } else {
-      await query(
-        `UPDATE known_devices SET last_seen_at = now(), last_ip = $3, last_location = $4
-         WHERE user_id = $1 AND device_id = $2`,
-        [user.id, finalDeviceId, ip, location],
-      )
+      await prisma.known_devices.updateMany({
+        where: { user_id: user.id, device_id: finalDeviceId },
+        data: { last_seen_at: new Date(), last_ip: ip, last_location: location },
+      })
     }
   } catch (err) {
     console.error('[login-alert] suivi appareil en échec:', err)

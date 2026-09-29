@@ -1,0 +1,185 @@
+// BMW AutoSell — schéma Prisma (source de vérité, Neon)
+// Les noms de champs = noms de colonnes (snake_case) pour préserver
+// exactement les formes d'objets JSON exposées par l'API.
+// CHECK constraints et index partiels (soft-delete) sont appliqués en SQL
+// brut via prisma/migrations (appendix/constraints.sql).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model roles {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+
+  users users[]
+}
+
+model users {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name               String    @default("") @db.VarChar(100)
+  last_name                String    @default("") @db.VarChar(100)
+  email                    String    @unique @db.VarChar(255)
+  password_hash            String
+  role_id                  Int?
+  two_factor_secret        String?
+  is_two_factor_enabled    Boolean   @default(false)
+  is_active                Boolean   @default(false)
+  activation_token_hash    String?
+  activation_expires_at    DateTime? @db.Timestamptz(6)
+  created_at               DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at               DateTime? @db.Timestamptz(6)
+  profile_photo_data       Bytes?
+  profile_photo_mime_type  String?   @db.VarChar(50)
+  is_super_admin           Boolean   @default(false)
+
+  role              roles?               @relation(fields: [role_id], references: [id])
+  carts             carts[]
+  vehicles_created  vehicles[]           @relation("vehicles_created_by")
+  known_devices     known_devices[]
+  admin_email_otps  admin_email_otps[]
+  orders            orders[]
+  reviews           reviews[]
+  favorites         favorites[]
+  admin_permissions admin_permissions?
+}
+
+model vehicles {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  model_name       String   @db.VarChar(100)
+  base_price       Decimal? @db.Decimal(10, 2)
+  category         String   @default("SUV") @db.VarChar(30)
+  series           String   @default("X") @db.VarChar(10)
+  variant_label    String   @default("Models") @db.VarChar(50)
+  is_new           Boolean  @default(false)
+  is_m_performance Boolean  @default(false)
+  drivetrain       String   @default("petrol") @db.VarChar(20)
+  image_data       Bytes?
+  image_mime_type  String?  @db.VarChar(50)
+  specs            Json?
+  created_by       String?  @db.Uuid
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at       DateTime? @db.Timestamptz(6)
+
+  creator   users?     @relation("vehicles_created_by", fields: [created_by], references: [id])
+  carts     carts[]
+  orders    orders[]
+  reviews   reviews[]
+  favorites favorites[]
+}
+
+model carts {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String    @db.Uuid
+  configuration_data Json
+  is_validated       Boolean   @default(false)
+  last_reminder_sent DateTime? @db.Timestamptz(6)
+  vehicle_id         String?   @db.Uuid
+  updated_at         DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at         DateTime? @db.Timestamptz(6)
+
+  user    users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vehicle vehicles? @relation(fields: [vehicle_id], references: [id])
+  orders  orders[]
+}
+
+model favorites {
+  user_id    String @db.Uuid
+  vehicle_id String @db.Uuid
+
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vehicle vehicles @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, vehicle_id])
+}
+
+model known_devices {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String   @db.Uuid
+  device_id     String
+  device_label  String?
+  last_ip       String?
+  last_location String?
+  first_seen_at DateTime @default(now()) @db.Timestamp(6)
+  last_seen_at  DateTime @default(now()) @db.Timestamp(6)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, device_id])
+}
+
+model admin_email_otps {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  code_hash  String
+  expires_at DateTime @db.Timestamp(6)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model orders {
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                    String    @db.Uuid
+  vehicle_id                 String    @db.Uuid
+  cart_id                    String?   @db.Uuid
+  amount                     Decimal   @db.Decimal(10, 2)
+  currency                   String    @default("GBP") @db.VarChar(3)
+  stripe_checkout_session_id String?
+  stripe_payment_intent_id   String?
+  status                     String    @default("pending") @db.VarChar(20)
+  processing_status          String    @default("pending") @db.VarChar(20)
+  refunded_at                DateTime? @db.Timestamp(6)
+  stripe_refund_id           String?
+  receipt_sent_at            DateTime? @db.Timestamp(6)
+  created_at                 DateTime  @default(now()) @db.Timestamp(6)
+
+  user    users    @relation(fields: [user_id], references: [id])
+  vehicle vehicles @relation(fields: [vehicle_id], references: [id])
+  cart    carts?   @relation(fields: [cart_id], references: [id])
+  reviews reviews[]
+}
+
+model reviews {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @db.Uuid
+  vehicle_id String    @db.Uuid
+  order_id   String    @unique @db.Uuid
+  rating     Int       @db.SmallInt
+  comment    String?
+  status     String    @default("pending") @db.VarChar(20)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  deleted_at DateTime? @db.Timestamp(6)
+
+  user    users    @relation(fields: [user_id], references: [id])
+  vehicle vehicles @relation(fields: [vehicle_id], references: [id])
+  order   orders   @relation(fields: [order_id], references: [id])
+}
+
+model admin_notifications {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type       String    @db.VarChar(30)
+  message    String
+  related_id String?   @db.Uuid
+  is_read    Boolean   @default(false)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model admin_permissions {
+  user_id             String   @id @db.Uuid
+  can_manage_vehicles Boolean  @default(true)
+  can_manage_orders   Boolean  @default(true)
+  can_process_refunds Boolean  @default(false)
+  can_manage_reviews  Boolean  @default(true)
+  can_view_reports    Boolean  @default(false)
+  can_manage_clients  Boolean  @default(true)
+  updated_at          DateTime @default(now()) @db.Timestamp(6)
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

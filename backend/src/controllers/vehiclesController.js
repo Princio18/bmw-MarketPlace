@@ -1,4 +1,4 @@
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 
 async function getVehicles(req, res) {
   try {
@@ -37,7 +37,9 @@ async function getVehicles(req, res) {
     }
     const orderClause = orderMap[sort] || 'created_at ASC'
 
-    const { rows } = await query(
+    // Requête complexe (agrégats + filtres dynamiques) : conservée en SQL
+    // brut exécuté par Prisma pour préserver le format exact des réponses.
+    const rows = await prisma.$queryRawUnsafe(
       `SELECT
          id,
          model_name AS "modelName",
@@ -60,9 +62,9 @@ async function getVehicles(req, res) {
        FROM vehicles
        WHERE ${conditions.join(' AND ')}
        ORDER BY ${orderClause}`,
-      values,
+      ...values,
     )
-    res.json(rows)
+    res.json(pgSafe(rows))
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles :', err)
     res.status(500).json({ error: 'Unable to load vehicles.' })
@@ -71,14 +73,14 @@ async function getVehicles(req, res) {
 
 async function getPriceRange(req, res) {
   try {
-    const { rows } = await query(
+    const rows = await prisma.$queryRawUnsafe(
       `SELECT
          MIN(base_price)::float8 AS "min",
          MAX(base_price)::float8 AS "max"
        FROM vehicles
        WHERE deleted_at IS NULL AND base_price IS NOT NULL`,
     )
-    res.json(rows[0])
+    res.json(pgSafe(rows[0]))
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles/price-range :', err)
     res.status(500).json({ error: 'Unable to load price range.' })
@@ -87,7 +89,7 @@ async function getPriceRange(req, res) {
 
 async function getVehicleById(req, res) {
   try {
-    const { rows } = await query(
+    const rows = await prisma.$queryRawUnsafe(
       `SELECT
          id,
          model_name AS "modelName",
@@ -109,12 +111,12 @@ async function getVehicleById(req, res) {
              AND r.status = 'published' AND r.deleted_at IS NULL) AS "reviewCount"
        FROM vehicles
        WHERE id = $1 AND deleted_at IS NULL`,
-      [req.params.id],
+      req.params.id,
     )
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vehicle not found.' })
     }
-    res.json(rows[0])
+    res.json(pgSafe(rows[0]))
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles/:id :', err)
     res.status(500).json({ error: 'Unable to load vehicle.' })
@@ -123,16 +125,16 @@ async function getVehicleById(req, res) {
 
 async function getVehicleImage(req, res) {
   try {
-    const { rows } = await query(
-      `SELECT image_data, image_mime_type FROM vehicles WHERE id = $1`,
-      [req.params.id],
-    )
-    if (!rows.length || !rows[0].image_data) {
+    const vehicle = await prisma.vehicles.findFirst({
+      where: { id: req.params.id },
+      select: { image_data: true, image_mime_type: true },
+    })
+    if (!vehicle || !vehicle.image_data) {
       return res.redirect('/images/placeholder-vehicle.svg')
     }
-    res.set('Content-Type', rows[0].image_mime_type)
+    res.set('Content-Type', vehicle.image_mime_type)
     res.set('Cache-Control', 'public, max-age=86400')
-    res.send(rows[0].image_data)
+    res.send(vehicle.image_data)
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles/:id/image :', err)
     res.status(500).json({ error: 'Unable to load vehicle image.' })

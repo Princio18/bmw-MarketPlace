@@ -1,6 +1,6 @@
 const { stripe } = require('./stripeClient')
 const { notify } = require('./adminNotifications')
-const { pool } = require('../db')
+const { prisma } = require('../db')
 const { sendOrderReceipt } = require('./receiptService')
 
 async function createCheckoutSession(req, res) {
@@ -15,7 +15,7 @@ async function createCheckoutSession(req, res) {
     return res.status(400).json({ error: 'cartId est obligatoire.' })
   }
 
-  const { rows } = await pool.query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        c.id,
        c.user_id,
@@ -26,7 +26,8 @@ async function createCheckoutSession(req, res) {
      FROM carts c
      JOIN vehicles v ON v.id = c.vehicle_id
      WHERE c.id = $1 AND c.user_id = $2 AND c.is_validated = false AND c.deleted_at IS NULL`,
-    [cartId, req.user.id],
+    cartId,
+    req.user.id,
   )
   const cart = rows[0]
   if (!cart) {
@@ -38,13 +39,18 @@ async function createCheckoutSession(req, res) {
       .json({ error: 'This vehicle is not yet available for online purchase.' })
   }
 
-  const { rows: orderRows } = await pool.query(
-    `INSERT INTO orders (user_id, vehicle_id, cart_id, amount, currency, status)
-     VALUES ($1, $2, $3, $4, 'GBP', 'pending')
-     RETURNING id`,
-    [req.user.id, cart.vehicleId, cart.id, cart.basePrice],
-  )
-  const orderId = orderRows[0].id
+  const order = await prisma.orders.create({
+    data: {
+      user_id: req.user.id,
+      vehicle_id: cart.vehicleId,
+      cart_id: cart.id,
+      amount: cart.basePrice,
+      currency: 'GBP',
+      status: 'pending',
+    },
+    select: { id: true },
+  })
+  const orderId = order.id
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
@@ -66,10 +72,10 @@ async function createCheckoutSession(req, res) {
     metadata: { orderId },
   })
 
-  await pool.query(
-    'UPDATE orders SET stripe_checkout_session_id = $1 WHERE id = $2',
-    [session.id, orderId],
-  )
+  await prisma.orders.update({
+    where: { id: orderId },
+    data: { stripe_checkout_session_id: session.id },
+  })
 
   return res.json({ url: session.url })
 }
@@ -94,12 +100,18 @@ async function handleCheckoutCompleted(session) {
     return
   }
 
-  const { rows } = await pool.query(
-    `UPDATE orders
-       SET status = 'paid', stripe_payment_intent_id = $1
-     WHERE id = $2 AND status <> 'paid'
-     RETURNING *`,
-    [session.payment_intent, orderId],
+  // CTE "data-modifying" : met à jour la commande et la renvoie en une seule
+  // requête atomique (équivalent de l'ancien UPDATE ... RETURNING *).
+  const rows = await prisma.$queryRawUnsafe(
+    `WITH updated AS (
+       UPDATE orders
+          SET status = 'paid', stripe_payment_intent_id = $1
+        WHERE id = $2 AND status <> 'paid'
+        RETURNING *
+     )
+     SELECT * FROM updated`,
+    session.payment_intent,
+    orderId,
   )
   const order = rows[0]
   if (!order) {
@@ -108,7 +120,7 @@ async function handleCheckoutCompleted(session) {
   }
 
   if (order.cart_id) {
-    await pool.query('UPDATE carts SET is_validated = true WHERE id = $1', [order.cart_id])
+    await prisma.carts.updateMany({ where: { id: order.cart_id }, data: { is_validated: true } })
   }
 
   notify({
@@ -128,12 +140,16 @@ async function handleChargeRefunded(charge) {
   // NOTE IMPORTANTE : l'événement `charge.refunded` doit être ACTIVÉ dans la
   // configuration du webhook côté tableau de bord Stripe (ou `stripe listen`
   // en local) — sinon il n'est jamais délivré, même si ce code le gère.
-  const { rows } = await pool.query(
-    `UPDATE orders
-        SET status = 'refunded', refunded_at = now(), stripe_refund_id = $1
-      WHERE stripe_payment_intent_id = $2 AND status = 'paid'
-      RETURNING id`,
-    [refundId, charge.payment_intent],
+  const rows = await prisma.$queryRawUnsafe(
+    `WITH updated AS (
+       UPDATE orders
+          SET status = 'refunded', refunded_at = now(), stripe_refund_id = $1
+        WHERE stripe_payment_intent_id = $2 AND status = 'paid'
+        RETURNING id
+     )
+     SELECT * FROM updated`,
+    refundId,
+    charge.payment_intent,
   )
   const order = rows[0]
   if (!order) {
@@ -153,10 +169,10 @@ async function handleCheckoutExpired(session) {
   if (!orderId) {
     return
   }
-  await pool.query(
-    "UPDATE orders SET status = 'expired' WHERE id = $1 AND status = 'pending'",
-    [orderId],
-  )
+  await prisma.orders.updateMany({
+    where: { id: orderId, status: 'pending' },
+    data: { status: 'expired' },
+  })
 }
 
 module.exports = {

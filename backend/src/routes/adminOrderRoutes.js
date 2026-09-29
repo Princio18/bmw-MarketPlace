@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { query } = require('../db')
+const { prisma, pgSafe } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { checkPermission } = require('../middleware/checkPermission')
 const { ROLES } = require('../roles')
@@ -31,32 +31,33 @@ async function listOrders(req, res) {
   const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 20))
   const offset = (page - 1) * pageSize
 
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `${ORDER_SELECT}
      ORDER BY o.created_at DESC
      LIMIT $1 OFFSET $2`,
-    [pageSize, offset],
+    pageSize,
+    offset,
   )
-  return res.json({ orders: rows, page, pageSize })
+  return res.json({ orders: pgSafe(rows), page, pageSize })
 }
 
 async function getSummary(req, res) {
-  const { rows } = await query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        COALESCE(SUM(amount) FILTER (WHERE status = 'paid'), 0)::float8 AS "totalRevenue",
        COUNT(*) FILTER (WHERE status = 'paid') AS "ordersThisMonth",
        COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND created_at >= date_trunc('month', now())), 0)::float8 AS "revenueThisMonth"
      FROM orders`,
   )
-  return res.json(rows[0])
+  return res.json(pgSafe(rows[0]))
 }
 
 async function resendReceipt(req, res) {
-  const { rowCount } = await query(
-    `SELECT 1 FROM orders WHERE id = $1 AND status = 'paid'`,
-    [req.params.id],
-  )
-  if (rowCount === 0) {
+  const order = await prisma.orders.findFirst({
+    where: { id: req.params.id, status: 'paid' },
+    select: { id: true },
+  })
+  if (!order) {
     return res.status(404).json({ error: 'Commande introuvable ou non payée.' })
   }
 
@@ -77,11 +78,11 @@ async function setProcessingStatus(req, res) {
       .json({ error: `processingStatus doit être l'un de : ${PROCESSING_STATUSES.join(', ')}.` })
   }
 
-  const { rowCount } = await query(
-    'UPDATE orders SET processing_status = $1 WHERE id = $2',
-    [processingStatus, req.params.id],
-  )
-  if (rowCount === 0) {
+  const result = await prisma.orders.updateMany({
+    where: { id: req.params.id },
+    data: { processing_status: processingStatus },
+  })
+  if (result.count === 0) {
     return res.status(404).json({ error: 'Commande introuvable.' })
   }
   return res.json({ ok: true, processingStatus })
@@ -95,11 +96,10 @@ async function refundOrder(req, res) {
       .json({ error: 'Le paiement n’est pas configuré (STRIPE_SECRET_KEY manquant).' })
   }
 
-  const { rows } = await query(
-    'SELECT id, status, stripe_payment_intent_id, amount, currency FROM orders WHERE id = $1',
-    [req.params.id],
-  )
-  const order = rows[0]
+  const order = await prisma.orders.findFirst({
+    where: { id: req.params.id },
+    select: { id: true, status: true, stripe_payment_intent_id: true },
+  })
   if (!order) {
     return res.status(404).json({ error: 'Commande introuvable.' })
   }

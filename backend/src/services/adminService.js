@@ -1,14 +1,18 @@
-const { query } = require('../db')
+const { prisma } = require('../db')
 const { usersRepo } = require('../repositories/users')
 const { hashPassword } = require('../auth/passwords')
 const { ROLES } = require('../roles')
 
 async function getOrCreateAdminRoleId() {
-  const { rows } = await query("SELECT id FROM roles WHERE name = $1", [ROLES.ADMIN])
-  if (rows.length > 0) return rows[0].id
-  await query("INSERT INTO roles (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", [ROLES.ADMIN])
-  const { rows: after } = await query("SELECT id FROM roles WHERE name = $1", [ROLES.ADMIN])
-  return after[0].id
+  let role = await prisma.roles.findFirst({ where: { name: ROLES.ADMIN }, select: { id: true } })
+  if (role) return role.id
+  try {
+    await prisma.roles.create({ data: { name: ROLES.ADMIN } })
+  } catch (err) {
+    if (err.code !== 'P2002') throw err
+  }
+  role = await prisma.roles.findFirst({ where: { name: ROLES.ADMIN }, select: { id: true } })
+  return role.id
 }
 
 // Logique unique de création d'un compte admin (hash + insertion),
@@ -23,17 +27,22 @@ async function createAdminUser({ email, password, firstName = '', lastName = '',
   const roleId = await getOrCreateAdminRoleId()
   const passwordHash = await hashPassword(password)
 
-  const { rows } = await query(
-    `INSERT INTO users (email, password_hash, role_id, first_name, last_name,
-                        is_two_factor_enabled, is_super_admin)
-     VALUES ($1, $2, $3, $4, $5, false, $6)
-     RETURNING id`,
-    [normalizedEmail, passwordHash, roleId, firstName, lastName, isSuperAdmin],
-  )
+  const created = await prisma.users.create({
+    data: {
+      email: normalizedEmail,
+      password_hash: passwordHash,
+      role_id: roleId,
+      first_name: firstName,
+      last_name: lastName,
+      is_two_factor_enabled: false,
+      is_super_admin: isSuperAdmin,
+    },
+    select: { id: true },
+  })
 
   return {
     created: true,
-    user: { id: rows[0].id, email: normalizedEmail, role: ROLES.ADMIN },
+    user: { id: created.id, email: normalizedEmail, role: ROLES.ADMIN },
   }
 }
 

@@ -7,14 +7,19 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "db:init": "node src/db/init.js",
-    "db:migrate": "node src/db/migrate.js",
-    "import:images": "node scripts/importVehicleImages.js",
-    "db:drop-image-url": "node src/db/migrate-image-url-drop.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:studio": "prisma studio",
+    "seed:roles": "node scripts/seedRoles.js",
     "seed:admin": "node scripts/seedAdmin.js",
-    "seed:vehicles": "node scripts/seedVehicles.js"
+    "seed:vehicles": "node scripts/seedVehicles.js",
+    "db:seed": "npm run seed:roles && npm run seed:admin && npm run seed:vehicles",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -33,6 +38,7 @@
     "ua-parser-js": "^2.0.10"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prisma": "^7.10.0"
   }
 }

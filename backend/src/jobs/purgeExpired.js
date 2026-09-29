@@ -1,45 +1,41 @@
 const cron = require('node-cron')
-const { query } = require('../db')
+const { prisma } = require('../db')
 
 const RETENTION_DAYS = 90
 const CRON_SCHEDULE = '0 3 * * *' // tous les jours à 03:00
 
 async function purgeExpiredRows() {
-  const cutoff = `now() - interval '${RETENTION_DAYS} days'`
+  const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000)
   const report = []
 
-  const r1 = await query(
-    `DELETE FROM carts
-      WHERE deleted_at IS NOT NULL AND deleted_at < ${cutoff}`,
-  )
-  report.push(`carts : ${r1.rowCount}`)
+  const r1 = await prisma.carts.deleteMany({
+    where: { deleted_at: { not: null, lt: cutoff } },
+  })
+  report.push(`carts : ${r1.count}`)
 
-  const r2 = await query(
-    `DELETE FROM vehicles
-      WHERE deleted_at IS NOT NULL AND deleted_at < ${cutoff}`,
-  )
-  report.push(`vehicles : ${r2.rowCount}`)
+  const r2 = await prisma.vehicles.deleteMany({
+    where: { deleted_at: { not: null, lt: cutoff } },
+  })
+  report.push(`vehicles : ${r2.count}`)
 
-  const r2fa = await query(
-    `DELETE FROM admin_email_otps
-      WHERE expires_at < now()`,
-  )
-  report.push(`admin_email_otps : ${r2fa.rowCount}`)
+  const r2fa = await prisma.admin_email_otps.deleteMany({
+    where: { expires_at: { lt: new Date() } },
+  })
+  report.push(`admin_email_otps : ${r2fa.count}`)
 
-  const r3 = await query(
-    `DELETE FROM users
-      WHERE deleted_at IS NOT NULL AND deleted_at < ${cutoff}`,
-  )
-  report.push(`users : ${r3.rowCount}`)
+  const r3 = await prisma.users.deleteMany({
+    where: { deleted_at: { not: null, lt: cutoff } },
+  })
+  report.push(`users : ${r3.count}`)
 
-  const rClient = await query(
-    `DELETE FROM users
-      WHERE role_id = (SELECT id FROM roles WHERE name = 'client')
-        AND is_active = FALSE
-        AND activation_expires_at IS NOT NULL
-        AND activation_expires_at < now()`,
-  )
-  report.push(`clients_inactifs_expires : ${rClient.rowCount}`)
+  const rClient = await prisma.users.deleteMany({
+    where: {
+      role: { name: 'client' },
+      is_active: false,
+      activation_expires_at: { not: null, lt: new Date() },
+    },
+  })
+  report.push(`clients_inactifs_expires : ${rClient.count}`)
 
   console.log(`[purge] ${new Date().toISOString()} — ${report.join(', ')}`)
   return report

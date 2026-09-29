@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-const { closePool } = require('../src/db')
+const { closeDb } = require('../src/db')
 const { usersRepo } = require('../src/repositories/users')
 const { createAdminUser } = require('../src/services/adminService')
 const { isValidEmail, validatePassword } = require('../src/auth/validation')
@@ -64,15 +64,15 @@ async function run() {
 
 run()
   .then(async (code) => {
-    await closePool()
+    await closeDb()
     process.exit(code)
   })
   .catch(async (err) => {
     console.error('[seed:admin] Erreur inattendue :', err)
     try {
-      await closePool()
+      await closeDb()
     } catch {
-      // pool déjà fermé
+      // client déjà fermé
     }
     process.exit(1)
   })

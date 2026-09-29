@@ -6,6 +6,7 @@ const { ROLES } = require('../roles')
 const { createAdminUser } = require('../services/adminService')
 const { requireSuperAdmin } = require('../middleware/requireSuperAdmin')
 const { isValidEmail, validatePassword } = require('../auth/validation')
+const { prisma } = require('../db')
 
 const router = Router()
 
@@ -71,16 +72,16 @@ router.post('/create-admin', requireSuperAdmin, createAdminLimiter, async (req, 
       return res.status(409).json({ error: 'An account with this email already exists.' })
     }
 
-    await require('../db').query(
-      `INSERT INTO admin_permissions (user_id) VALUES ($1)
-       ON CONFLICT (user_id) DO NOTHING`,
-      [user.id],
-    )
+    await prisma.admin_permissions.upsert({
+      where: { user_id: req.user.id },
+      create: { user_id: req.user.id },
+      update: {},
+    })
 
     console.log(`[admin] Nouvel admin créé par ${req.user.id} : ${user.email}`)
     return res.status(201).json({ id: user.id, email: user.email, role: user.role })
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === 'P2002') {
       return res.status(409).json({ error: 'An account with this email already exists.' })
     }
     return next(err)

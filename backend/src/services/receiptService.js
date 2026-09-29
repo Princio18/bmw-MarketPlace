@@ -1,16 +1,22 @@
 const fs = require('fs')
 const path = require('path')
 const PDFDocument = require('pdfkit')
-const { pool } = require('../db')
+const { prisma } = require('../db')
 const { sendMail } = require('./mailer')
 
 const RECEIPT_TEMPLATE_PATH = path.join(__dirname, '..', 'templates', 'receipt-email.html')
 
+function groupToSpaces(str) {
+  return String(str).replace(/[\u202f\u00a0,]/g, ' ')
+}
+
 function formatGbp(amount) {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-  }).format(Number(amount))
+  return groupToSpaces(
+    new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+    }).format(Number(amount)),
+  )
 }
 
 function renderReceiptEmail({ modelName, amount }) {
@@ -104,7 +110,7 @@ async function generateReceiptPdf(order, user, vehicle) {
 }
 
 async function sendOrderReceipt(orderId) {
-  const { rows } = await pool.query(
+  const rows = await prisma.$queryRawUnsafe(
     `SELECT
        o.*,
        u.email,
@@ -114,7 +120,7 @@ async function sendOrderReceipt(orderId) {
      JOIN users u ON u.id = o.user_id
      JOIN vehicles v ON v.id = o.vehicle_id
      WHERE o.id = $1`,
-    [orderId],
+    orderId,
   )
   const order = rows[0]
   if (!order) {
@@ -122,7 +128,7 @@ async function sendOrderReceipt(orderId) {
   }
 
   const pdfBuffer = await generateReceiptPdf(order, order, order)
-  const amount = Number(order.amount).toLocaleString('en-GB')
+  const amount = groupToSpaces(Number(order.amount).toLocaleString('en-GB'))
 
   await sendMail({
     to: order.email,
@@ -139,7 +145,10 @@ async function sendOrderReceipt(orderId) {
     ],
   })
 
-  await pool.query('UPDATE orders SET receipt_sent_at = now() WHERE id = $1', [orderId])
+  await prisma.orders.updateMany({
+    where: { id: orderId },
+    data: { receipt_sent_at: new Date() },
+  })
 }
 
 module.exports = { generateReceiptPdf, renderReceiptEmail, sendOrderReceipt }
