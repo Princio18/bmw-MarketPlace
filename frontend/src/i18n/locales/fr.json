@@ -136,7 +136,8 @@
       "errors": {
         "enterBmwId": "Veuillez saisir votre BMW ID.",
         "incorrect": "BMW ID ou mot de passe incorrect."
-      }
+      },
+      "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
     },
     "register": {
       "activationFailed": "Échec de l'activation",
@@ -380,6 +381,161 @@
       "processingReady": "Prête",
       "processingDelivered": "Livrée",
       "processingCancelled": "Annulée"
+    }
+  },
+  "configure": {
+    "loading": "Chargement de la configuration…",
+    "notFound": "Véhicule introuvable",
+    "notFoundHint": "Cette configuration n'est plus disponible.",
+    "backToAllModels": "Retour à tous les modèles",
+    "error": "Impossible de charger cette configuration. Veuillez réessayer.",
+    "navbar": {
+      "seriesModels": "{{series}} Modèles",
+      "range": "Autonomie électrique (WLTP)",
+      "consumption": "Consommation d'énergie (WLTP)",
+      "minChargeTime": "Temps de charge min. DC",
+      "technicalData": "Données techniques",
+      "standardEquipment": "Équipements de série",
+      "adjustRental": "Ajuster ma mensualité",
+      "totalPrice": "Prix total",
+      "saveConfiguration": "Enregistrer la configuration",
+      "notAvailable": "non disponible",
+      "reset": "Recommencer",
+      "monthlySuffix": "/mois"
+    },
+    "tabs": {
+      "models": "Modèles",
+      "engines": "Motorisations",
+      "exteriorColours": "Couleur extérieure",
+      "alloyWheels": "Jantes",
+      "upholstery": "Sellerie",
+      "interiorTrims": "Garnitures intérieures",
+      "packages": "Packs",
+      "optionalEquipment": "Options",
+      "charging": "Recharge",
+      "summary": "Récapitulatif"
+    },
+    "steps": {
+      "counter": "{{current}} / {{total}}",
+      "view360": "Vue 360°",
+      "scrollTabs": "Défiler les onglets"
+    },
+    "image": {
+      "expand": "Agrandir l'image"
+    },
+    "options": {
+      "from": "À partir de {{price}}",
+      "showDetails": "Voir le détail",
+      "empty": "Aucune option configurée pour {{label}}.",
+      "selected": "Sélectionné",
+      "summaryModel": "Modèle : {{name}}",
+      "summaryPrice": "Prix total : {{price}}",
+      "summaryEmpty": "Aucun modèle sélectionné pour l'instant.",
+      "summaryHint": "Le récapitulatif détaillé sera disponible dans une prochaine mise à jour."
+    },
+    "modal": {
+      "comingSoon": "Disponible dans la prochaine mise à jour",
+      "close": "Fermer",
+      "technicalData": "Données techniques",
+      "standardEquipment": "Équipements de série",
+      "finance": "Mensualité",
+      "priceOverview": "Récapitulatif du prix",
+      "saveConfiguration": "Enregistrer la configuration"
+    },
+    "bottomBar": {
+      "consumption": "Consommation d'énergie : {{consumption}} ; émissions de CO2 : {{co2}}",
+      "scrollToContinue": "Faites défiler pour continuer"
+    },
+    "technicalData": {
+      "title": "Moteur / Données techniques.",
+      "sections": {
+        "engine": "Moteur",
+        "consumption": "Consommation",
+        "electricRange": "Autonomie électrique / Recharge",
+        "performanceWeight": "Performances / Poids",
+        "dimensions": "Dimensions"
+      },
+      "rows": {
+        "performance": "Puissance du moteur",
+        "torque": "Couple",
+        "fuelType": "Carburant",
+        "transmission": "Boîte de vitesses",
+        "energyConsumption": "Consommation d'énergie WLTP (combinée)",
+        "co2": "Émissions de CO2 WLTP (combinées)",
+        "passByNoise": "Bruit de roulement",
+        "wltpRange": "Autonomie électrique WLTP (combinée)",
+        "batterySizeGross": "Capacité de batterie (brute)",
+        "batterySizeNet": "Capacité de batterie (nette)",
+        "chargingTimeAC": "Temps de charge (AC, 0-100%)",
+        "maxChargingAC": "Puissance de charge max. AC",
+        "chargingTimeDC": "Temps de charge (DC, 10-80%)",
+        "maxChargingDC": "Puissance de charge max. DC",
+        "addedRange10Min": "Autonomie ajoutée après 10 minutes de charge à haute puissance",
+        "unladenWeight": "Poids à vide EU",
+        "axleLoad": "Charge admissible essieu avant/arrière",
+        "acceleration": "Accélération (0-62 mph)",
+        "permittedLoad": "Charge admissible totale",
+        "payload": "Charge utile",
+        "maxTrailerLoad": "Charge de remorquage max. (freinée 12% / nez de remorque)",
+        "trailerLoadUnbraked": "Charge de remorque (non freinée)",
+        "lengthWidthHeight": "Longueur/largeur/hauteur",
+        "widthMirrorsDriver": "Largeur avec rétroviseurs (conducteur)",
+        "widthMirrorsPassenger": "Largeur avec rétroviseurs (passager)",
+        "seats": "Nombre de places",
+        "wheelbase": "Empattement (diamètre de braquage)",
+        "luggageCapacity": "Capacité du coffre"
+      },
+      "notes": {
+        "consumptionNote": "*Les valeurs mesurées conformément au Règlement CEE-51 / Règlement UE 540/2014 sont arrondies.",
+        "addedRangeNote": "*L'autonomie ajoutée dépend de l'état de charge, de la température et de l'état de la batterie, des conditions ambiantes, du profil de conduite et de la borne de charge utilisée. La valeur obtenue en pratique peut différer de celle indiquée."
+      }
+    },
+    "standardEquipment": {
+      "title": "Équipements de série.",
+      "intro": "Cette BMW vous convainc déjà avec de nombreux équipements de série à l'intérieur et à l'extérieur, notamment :",
+      "sections": {
+        "exterior": "Extérieur",
+        "interior": "Intérieur",
+        "driveSuspension": "Conduite/suspension"
+      }
+    },
+    "finance": {
+      "title": "Financement BMW Financial Services",
+      "step1": "Étape 1 sur 2",
+      "step1Title": "Choisissez votre produit de financement",
+      "step2": "Étape 2 sur 2",
+      "step2Title": "Personnalisez votre devis",
+      "monthlyRental": "Mensualité de location",
+      "monthlyPayment": "Mensualité de remboursement",
+      "mileagePerYear": "Kilométrage annuel",
+      "mileageOption": "{{count}} miles",
+      "contractLength": "Durée du contrat",
+      "contractOption": "{{months}} mois",
+      "noProduct": "Aucun produit de financement disponible",
+      "accept": "Accepter et continuer"
+    },
+    "priceOverview": {
+      "title": "APERÇU DU PRIX.",
+      "labels": {
+        "basePrice": "Prix de base",
+        "options": "Équipements optionnels sélectionnés",
+        "vat": "TVA",
+        "otrFee": "Frais de mise en circulation",
+        "total": "Prix TTC*"
+      },
+      "rate": "({{rate}} %)",
+      "footnote": "Le prix TTC inclut la TVA, les frais de mise en circulation et les équipements optionnels sélectionnés."
+    },
+    "saveConfiguration": {
+      "title": "ENREGISTRER LA CONFIGURATION.",
+      "subtitle": "{{model}} : Accédez à votre configuration à tout moment et affinez-la en l'enregistrant dans votre liste de souhaits myBMW.",
+      "checklist": "Cliquez sur Enregistrer et confirmer pour recevoir des informations sur votre configuration enregistrée de la part d'un Concessionnaire BMW.",
+      "legal": "Votre configuration sera enregistrée et un Concessionnaire BMW vous contactera par téléphone ou par e-mail. Pour connaître le traitement de vos données, consultez notre",
+      "privacyPolicy": "Politique de confidentialité BMW",
+      "and": "et",
+      "centrePolicy": "Politique de confidentialité du Concessionnaire BMW",
+      "saveOnly": "Enregistrer uniquement",
+      "saveAndConfirm": "Enregistrer et confirmer"
     }
   }
 }

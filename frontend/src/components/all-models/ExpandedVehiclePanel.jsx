@@ -161,6 +161,7 @@ function ExpandedVehiclePanel({ vehicle }) {
           <div className="mt-6 flex flex-col gap-3">
             <button
               type="button"
+              onClick={() => navigate(`/configure/${vehicle.id}`)}
               className="rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
             >
               {t('allModels.buildAndPrice')}

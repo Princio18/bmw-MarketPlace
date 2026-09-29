@@ -1,4 +1,4 @@
-import { Route, Routes, Link, Navigate } from 'react-router-dom'
+import { Route, Routes, Link, Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +15,7 @@ import Register from './pages/Register'
 import FindBmwCentre from './pages/FindBmwCentre'
 import AllModels from './pages/AllModels'
 import VehicleDetail from './pages/VehicleDetail'
+import Configure from './pages/Configure'
 import Cart from './pages/Cart'
 import OrderConfirmation from './pages/OrderConfirmation'
 import AdminOtp from './pages/AdminOtp'
@@ -29,9 +30,19 @@ import Reports from './pages/admin/Reports'
 import Settings from './pages/admin/Settings'
 import MyOrders from './pages/MyOrders'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import { useIdleLogout } from './hooks/useIdleLogout'
+
+// La key force un remontage du configurateur quand le véhicule change :
+// état de sélection et IntersectionObserver repartent proprement.
+function ConfigureRoute() {
+  const { vehicleId } = useParams()
+  return <Configure key={vehicleId} />
+}
 
 function App() {
   const { t } = useTranslation()
+  // Un seul minuteur d'inactivité pour toute l'application.
+  useIdleLogout()
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -48,6 +59,14 @@ function App() {
         }
       />
       <Route path="/order-confirmation" element={<OrderConfirmation />} />
+      <Route
+        path="/configure/:vehicleId"
+        element={
+          <ProtectedRoute allowedRoles={['client', 'admin']}>
+            <ConfigureRoute />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/my-orders"
         element={

@@ -100,6 +100,7 @@ async function getVehicleById(req, res) {
          drivetrain,
          is_m_performance AS "isMPerformance",
          base_price::float8 AS "basePrice",
+         specs,
          '/api/vehicles/' || id || '/image' AS "image",
          (SELECT ROUND(AVG(rating::numeric), 1)
             FROM reviews r

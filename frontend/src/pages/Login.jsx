@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import api from '../services/api'
@@ -45,9 +45,13 @@ function Login() {
   const [settled, setSettled] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { t } = useTranslation()
   const { login } = useAuth()
   const from = location.state?.from
+  // Bandeau d'information distinct de l'erreur de mot de passe : affiché
+  // dans les deux étapes du formulaire, jamais en rouge.
+  const sessionExpired = searchParams.get('reason') === 'session_expired'
 
   const [step, setStep] = useState('identifier') // 'identifier' | 'password'
   const [bmwId, setBmwId] = useState('')
@@ -114,6 +118,14 @@ function Login() {
           <h1 className="font-manrope text-3xl font-extralight text-gray-900">
             {t('pages.login.title')}
           </h1>
+          {sessionExpired && (
+            <p
+              role="status"
+              className="mt-4 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+            >
+              {t('pages.login.sessionExpired')}
+            </p>
+          )}
           <p className="mt-4 text-sm text-gray-700">
             {t('pages.login.noBmwId')}{' '}
             <Link to="/register" className="font-bold underline">

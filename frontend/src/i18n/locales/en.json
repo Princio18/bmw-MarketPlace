@@ -136,7 +136,8 @@
       "errors": {
         "enterBmwId": "Please enter your BMW ID.",
         "incorrect": "Incorrect BMW ID or password."
-      }
+      },
+      "sessionExpired": "Your session has expired. Please log in again."
     },
     "register": {
       "activationFailed": "Activation failed",
@@ -380,6 +381,161 @@
       "processingReady": "Ready",
       "processingDelivered": "Delivered",
       "processingCancelled": "Cancelled"
+    }
+  },
+  "configure": {
+    "loading": "Loading configuration…",
+    "notFound": "Vehicle not found",
+    "notFoundHint": "This configuration is no longer available.",
+    "backToAllModels": "Back to all models",
+    "error": "Unable to load this configuration. Please try again.",
+    "navbar": {
+      "seriesModels": "{{series}} Models",
+      "range": "Electric range (WLTP)",
+      "consumption": "Energy consumption (WLTP)",
+      "minChargeTime": "Min. charge time DC",
+      "technicalData": "Technical Data",
+      "standardEquipment": "Standard equipment",
+      "adjustRental": "Adjust my Monthly Rental",
+      "totalPrice": "Total price",
+      "saveConfiguration": "Save configuration",
+      "notAvailable": "not available",
+      "reset": "Start again",
+      "monthlySuffix": "/month"
+    },
+    "tabs": {
+      "models": "Models",
+      "engines": "Engines",
+      "exteriorColours": "Exterior Colour",
+      "alloyWheels": "Alloy Wheels",
+      "upholstery": "Upholstery",
+      "interiorTrims": "Interior Trims",
+      "packages": "Packages",
+      "optionalEquipment": "Optional Equipment",
+      "charging": "Charging",
+      "summary": "Summary"
+    },
+    "steps": {
+      "counter": "{{current}} / {{total}}",
+      "view360": "360° view",
+      "scrollTabs": "Scroll tabs"
+    },
+    "image": {
+      "expand": "Expand image"
+    },
+    "options": {
+      "from": "From {{price}}",
+      "showDetails": "Show details",
+      "empty": "No options configured yet for {{label}}.",
+      "selected": "Selected",
+      "summaryModel": "Model: {{name}}",
+      "summaryPrice": "Total price: {{price}}",
+      "summaryEmpty": "No model selected yet.",
+      "summaryHint": "The detailed summary will be available in a later update."
+    },
+    "modal": {
+      "comingSoon": "Coming in the next update",
+      "close": "Close",
+      "technicalData": "Technical Data",
+      "standardEquipment": "Standard equipment",
+      "finance": "Monthly rental",
+      "priceOverview": "Price overview",
+      "saveConfiguration": "Save configuration"
+    },
+    "bottomBar": {
+      "consumption": "Energy consumption: {{consumption}}; CO2 emissions: {{co2}}",
+      "scrollToContinue": "Scroll to continue"
+    },
+    "technicalData": {
+      "title": "Engine / Technical data.",
+      "sections": {
+        "engine": "Engine",
+        "consumption": "Consumption",
+        "electricRange": "Electric range / Charging",
+        "performanceWeight": "Performance / Weight",
+        "dimensions": "Dimensions"
+      },
+      "rows": {
+        "performance": "Engine performance",
+        "torque": "Torque",
+        "fuelType": "Fuel type",
+        "transmission": "Transmission",
+        "energyConsumption": "WLTP Energy consumption (combined)",
+        "co2": "WLTP CO2 Emission (combined)",
+        "passByNoise": "Pass-by noise",
+        "wltpRange": "WLTP Electric range (combined)",
+        "batterySizeGross": "Battery size (gross)",
+        "batterySizeNet": "Battery size (net)",
+        "chargingTimeAC": "Charging time (AC, 0-100% SOC)",
+        "maxChargingAC": "Max. charging performance AC",
+        "chargingTimeDC": "Charging time (DC, 10-80% SOC)",
+        "maxChargingDC": "Max. charging performance DC",
+        "addedRange10Min": "Added range after 10 minutes of high-power charging",
+        "unladenWeight": "Unladen weight EU",
+        "axleLoad": "Permitted axle load front/rear",
+        "acceleration": "Acceleration (0-62 mph)",
+        "permittedLoad": "Permitted load",
+        "payload": "Payload",
+        "maxTrailerLoad": "Max. trailer load (braked 12% / Trailer nose weight)",
+        "trailerLoadUnbraked": "Trailer load (unbraked)",
+        "lengthWidthHeight": "Length/width/height",
+        "widthMirrorsDriver": "Width including mirrors (Driver)",
+        "widthMirrorsPassenger": "Width including mirrors (Passenger)",
+        "seats": "Number of seats",
+        "wheelbase": "Wheelbase (Turning cycle)",
+        "luggageCapacity": "Luggage capacity"
+      },
+      "notes": {
+        "consumptionNote": "*The values measured in accordance with UN/ECE Regulation No. 51/EU Regulation 540/2014 are rounded.",
+        "addedRangeNote": "*The added range depends on the battery state of charge, temperature and condition, ambient conditions, driving profile and the charging station used. The value achieved in practice may deviate from the figure shown."
+      }
+    },
+    "standardEquipment": {
+      "title": "Standard equipment.",
+      "intro": "This BMW already convinces with ample standard equipment on the interior and exterior including:",
+      "sections": {
+        "exterior": "Exterior",
+        "interior": "Interior",
+        "driveSuspension": "Drive/suspension"
+      }
+    },
+    "finance": {
+      "title": "Finance from BMW Financial Services",
+      "step1": "Step 1 of 2",
+      "step1Title": "Choose your finance product",
+      "step2": "Step 2 of 2",
+      "step2Title": "Tailor your Quote",
+      "monthlyRental": "Monthly Rental",
+      "monthlyPayment": "Monthly Payment",
+      "mileagePerYear": "Mileage per year",
+      "mileageOption": "{{count}} miles",
+      "contractLength": "Contract length",
+      "contractOption": "{{months}} months",
+      "noProduct": "No finance product available",
+      "accept": "Accept & Continue"
+    },
+    "priceOverview": {
+      "title": "PRICE OVERVIEW.",
+      "labels": {
+        "basePrice": "Base price",
+        "options": "Selected optional equipment",
+        "vat": "VAT",
+        "otrFee": "On the Road Fee",
+        "total": "OTR price*"
+      },
+      "rate": "({{rate}}%)",
+      "footnote": "On the Road price includes VAT, the on-the-road fee and the selected optional equipment."
+    },
+    "saveConfiguration": {
+      "title": "SAVE CONFIGURATION.",
+      "subtitle": "{{model}} : Access and refine your configuration at any time by saving to your myBMW Wishlist.",
+      "checklist": "Click Save and Confirm to receive information on your saved configuration from a BMW Centre.",
+      "legal": "Your configuration will be saved and a BMW Centre will contact you by telephone or email. For details on how your data is processed, see our",
+      "privacyPolicy": "BMW Privacy Policy",
+      "and": "and",
+      "centrePolicy": "BMW Centre's Privacy Policy",
+      "saveOnly": "Save only",
+      "saveAndConfirm": "Save and Confirm"
     }
   }
 }
