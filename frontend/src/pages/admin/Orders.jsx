@@ -5,6 +5,7 @@ import { getAuthToken } from '@/lib/authToken'
 import { formatPrice } from '@/lib/price'
 import { useAdminSearch } from '@/context/useAdminSearch'
 import ConfirmModal from '@/components/shared/ConfirmModal'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
 
@@ -71,7 +72,7 @@ function Orders() {
     } catch (err) {
       setMessages((prev) => ({
         ...prev,
-        [orderId]: { ok: false, text: err.response?.data?.error || t('common.error') },
+        [orderId]: { ok: false, text: getErrorMessage(err, t('common.error')) },
       }))
     } finally {
       setProcessingId(null)
@@ -94,7 +95,7 @@ function Orders() {
         ...prev,
         [order.id]: {
           ok: false,
-          text: err.response?.data?.error || t('common.error'),
+          text: getErrorMessage(err, t('common.error')),
         },
       }))
     }

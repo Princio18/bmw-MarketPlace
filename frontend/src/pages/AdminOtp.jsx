@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/useAuth'
 import api from '../services/api'
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 function AdminOtp() {
   const { state } = useLocation()
@@ -35,7 +36,7 @@ function AdminOtp() {
       setMaskedEmail(data.maskedEmail)
       setCooldown(60)
     } catch (err) {
-      setError(err.response?.data?.error || t('otp.unableToSend'))
+      setError(getErrorMessage(err, t('otp.unableToSend')))
     } finally {
       setSending(false)
     }
@@ -63,7 +64,7 @@ function AdminOtp() {
       login(data.token, false, data.user)
       navigate(state.from || '/admin', { replace: true })
     } catch (err) {
-      setError(err.response?.data?.error || t('otp.invalidCode'))
+      setError(getErrorMessage(err, t('otp.invalidCode')))
       setLoading(false)
     }
   }

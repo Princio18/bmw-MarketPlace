@@ -5,6 +5,7 @@ import api from '../services/api'
 import RegisterForm from '../components/auth/RegisterForm'
 import RegisterImage from '../components/auth/RegisterImage'
 import RegistrationProgress from '../components/auth/RegistrationProgress'
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 const PENDING_EMAIL_KEY = 'pendingRegistrationEmail'
 
@@ -71,9 +72,7 @@ function Register() {
         setResendCooldown(60)
       })
       .catch((err) => {
-        setResendError(
-          err.response?.data?.error || t('registrationProgress.resendFailed'),
-        )
+        setResendError(getErrorMessage(err, t('registrationProgress.resendFailed')))
       })
       .finally(() => setResending(false))
   }

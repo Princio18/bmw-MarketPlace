@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api from '@/services/api'
 import { getAuthToken } from '@/lib/authToken'
 import { formatPrice } from '@/lib/price'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 function StatusBadge({ status }) {
   const { t } = useTranslation()
@@ -54,7 +55,7 @@ function OrdersTable({ onRefund, refundMessageMap = {} }) {
     } catch (err) {
       setMessages((prev) => ({
         ...prev,
-        [id]: { ok: false, text: err.response?.data?.error || t('adminOrders.resendError') },
+        [id]: { ok: false, text: getErrorMessage(err, t('adminOrders.resendError')) },
       }))
     } finally {
       setResendingId(null)

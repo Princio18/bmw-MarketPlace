@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import api from '@/services/api'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -98,9 +99,7 @@ function RegisterForm({ onSubmitSuccess }) {
       })
       onSubmitSuccess?.(data.user?.email || values.email.trim())
     } catch (err) {
-      setServerError(
-        err.response?.data?.error || t('registerForm.registrationFailed'),
-      )
+      setServerError(getErrorMessage(err, t('registerForm.registrationFailed')))
     } finally {
       setSubmitting(false)
     }

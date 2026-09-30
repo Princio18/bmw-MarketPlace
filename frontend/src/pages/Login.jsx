@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../services/api'
 import { useAuth } from '../context/useAuth'
 import { getDeviceId } from '../utils/deviceId'
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 const images = [
   '/images/login/login-photo0.webp',
@@ -101,9 +102,7 @@ function Login() {
         { replace: true },
       )
     } catch (err) {
-      setError(
-        err.response?.data?.error || t('pages.login.errors.incorrect'),
-      )
+      setError(getErrorMessage(err, t('pages.login.errors.incorrect')))
     }
   }
 

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import api from '@/services/api'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const CATEGORIES = ['SUV', 'Touring', 'Saloon', 'Coupé', 'Hatch', 'Convertible']
 const SERIES = ['X', '1', '2', '3', '4', '5', '7', '8', 'Z']
@@ -135,7 +136,7 @@ function VehicleForm({ vehicle, onSuccess }) {
       }
       setSuccess(t(isEdit ? 'vehicleForm.updated' : 'vehicleForm.created'))
     } catch (err) {
-      setServerError(err.response?.data?.error || t('vehicleForm.genericError'))
+      setServerError(getErrorMessage(err, t('vehicleForm.genericError')))
     } finally {
       setSubmitting(false)
     }

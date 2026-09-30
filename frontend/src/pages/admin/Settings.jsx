@@ -5,6 +5,7 @@ import { getAuthToken } from '@/lib/authToken'
 import { useAuth } from '@/context/useAuth'
 import CreateAdminForm from '@/components/admin/CreateAdminForm'
 import ConfirmModal from '@/components/shared/ConfirmModal'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
 
@@ -87,7 +88,7 @@ function ChangePasswordForm() {
       setValues({ current: '', next: '', confirm: '' })
       setMessage({ ok: true, text: t('settings.passwordUpdated') })
     } catch (err) {
-      setMessage({ ok: false, text: err.response?.data?.error || t('settings.passwordError') })
+      setMessage({ ok: false, text: getErrorMessage(err, t('settings.passwordError')) })
     } finally {
       setSubmitting(false)
     }

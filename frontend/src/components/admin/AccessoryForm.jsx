@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import api from '@/services/api'
 import { getAuthToken } from '@/lib/authToken'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const ACCEPTED = 'image/png,image/jpeg,image/webp'
 
@@ -96,7 +97,7 @@ function AccessoryForm({ accessory, onSuccess }) {
       }
       onSuccess?.()
     } catch (err) {
-      setServerError(err.response?.data?.error || t('accessoryForm.genericError'))
+      setServerError(getErrorMessage(err, t('accessoryForm.genericError')))
     } finally {
       setSubmitting(false)
     }

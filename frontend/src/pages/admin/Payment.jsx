@@ -5,6 +5,7 @@ import { getAuthToken } from '@/lib/authToken'
 import { formatPrice } from '@/lib/price'
 import OrdersTable from '@/components/admin/OrdersTable'
 import ConfirmModal from '@/components/shared/ConfirmModal'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
 
@@ -27,7 +28,7 @@ function Payment() {
     } catch (err) {
       setRefundMessages((prev) => ({
         ...prev,
-        [order.id]: { ok: false, text: err.response?.data?.error || t('common.error') },
+        [order.id]: { ok: false, text: getErrorMessage(err, t('common.error')) },
       }))
     }
   }

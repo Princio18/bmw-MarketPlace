@@ -8,6 +8,7 @@ import DrivetrainIcon from '../components/all-models/DrivetrainIcon'
 import api from '../services/api'
 import { getAuthToken } from '../lib/authToken'
 import { formatPrice } from '../lib/price'
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 function Cart() {
   const { t } = useTranslation()
@@ -61,9 +62,7 @@ function Cart() {
       )
       window.location.href = data.url
     } catch (err) {
-      setPayError(
-        err.response?.data?.error || t('cart.payError'),
-      )
+      setPayError(getErrorMessage(err, t('cart.payError')))
       setPaying(false)
     }
   }
