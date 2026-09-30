@@ -1,17 +1,24 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import api from '../services/api'
+import { getAuthToken } from '../lib/authToken'
+import AlloyWheelsSection from '../components/configure/sections/AlloyWheelsSection'
 import ConfiguratorImage from '../components/configure/ConfiguratorImage'
 import ConfiguratorNavbar from '../components/configure/ConfiguratorNavbar'
+import EnginesSection from '../components/configure/sections/EnginesSection'
+import ExteriorColourSection from '../components/configure/sections/ExteriorColourSection'
 import FinanceModal from '../components/configure/modals/FinanceModal'
+import AccessoriesSection from '../components/configure/sections/AccessoriesSection'
+import LoadingSpinner3D from '../components/configure/LoadingSpinner3D'
 import OptionSection from '../components/configure/OptionSection'
 import PriceOverviewModal from '../components/configure/modals/PriceOverviewModal'
 import SaveConfigurationModal from '../components/configure/modals/SaveConfigurationModal'
 import StandardEquipmentModal from '../components/configure/modals/StandardEquipmentModal'
 import StepTabs from '../components/configure/StepTabs'
 import TechnicalDataModal from '../components/configure/modals/TechnicalDataModal'
+import UpholsterySection from '../components/configure/sections/UpholsterySection'
 import {
   BOTTOM_BAR_HEIGHT,
   NAVBAR_HEIGHT,
@@ -24,12 +31,53 @@ const TABS = [
   'exteriorColours',
   'alloyWheels',
   'upholstery',
-  'interiorTrims',
-  'packages',
   'optionalEquipment',
   'charging',
   'summary',
 ]
+
+// Onglets servis par un composant dédié ; les autres restent génériques.
+const DEDICATED_SECTIONS = {
+  engines: EnginesSection,
+  exteriorColours: ExteriorColourSection,
+  alloyWheels: AlloyWheelsSection,
+  upholstery: UpholsterySection,
+  optionalEquipment: AccessoriesSection,
+}
+
+// Chaque onglet mono-sélection maps vers UNE clé de selectedOptions : une
+// seule source de vérité pour l'état ET pour l'autosave.
+const TAB_OPTION_KEY = {
+  models: 'modelId',
+  engines: 'engineId',
+  exteriorColours: 'exteriorColourId',
+  alloyWheels: 'alloyWheelId',
+  upholstery: 'upholsteryId',
+}
+
+const EMPTY_SELECTION = {
+  modelId: null,
+  engineId: null,
+  exteriorColourId: null,
+  alloyWheelId: null,
+  upholsteryId: null,
+  accessoryIds: [],
+}
+
+// Le délai d'inactivité avant écriture du panier : laisse le temps de changer
+// plusieurs options (couleur puis jante) sans un POST par clic.
+const AUTOSAVE_DEBOUNCE_MS = 800
+
+// three.js pèse près d'un demi-mégaoctet gzip : on ne l'embarque pas dans le
+// chargement initial de la page produit, il n'est utile qu'au clic sur le
+// bouton 360°.
+const ThreeSixtyViewer = lazy(() =>
+  import('../components/configure/ThreeSixtyViewer'),
+)
+
+function toList(value) {
+  return Array.isArray(value) ? value : []
+}
 
 function Configure() {
   const { vehicleId } = useParams()
@@ -42,13 +90,18 @@ function Configure() {
   const [notFound, setNotFound] = useState(false)
   const [failed, setFailed] = useState(false)
   const [activeTab, setActiveTab] = useState(TABS[0])
-  const [selectedByTab, setSelectedByTab] = useState({})
+  const [selectedOptions, setSelectedOptions] = useState(EMPTY_SELECTION)
+  const [accessories, setAccessories] = useState([])
   const [openModal, setOpenModal] = useState(null)
+  const [show3D, setShow3D] = useState(false)
   // La sélection financière vit ici (et non dans la modale) pour rester la
   // source de vérité unique du montant mensuel : navbar et modale Finance
   // affichent toujours le même produit.
   const [selectedFinanceId, setSelectedFinanceId] = useState(null)
   const ratiosRef = useRef(new Map())
+  // Évite d'écrire un panier « vide » au premier rendu : seul un changement
+  // réel de configuration déclenche l'autosave.
+  const hasInteractedRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -73,27 +126,32 @@ function Configure() {
     }
   }, [vehicleId])
 
+  // Accessoires : catalogue en base, indissociable des specs du véhicule.
+  useEffect(() => {
+    let cancelled = false
+    api
+      .get('/accessories')
+      .then(({ data }) => {
+        if (!cancelled) setAccessories(toList(data?.accessories))
+      })
+      .catch(() => {
+        if (!cancelled) setAccessories([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const specs = vehicle?.specs ?? null
-  const models = useMemo(
-    () => (Array.isArray(specs?.models) ? specs.models : []),
-    [specs],
-  )
-  const financeOptions = useMemo(
-    () => (Array.isArray(specs?.financeOptions) ? specs.financeOptions : []),
-    [specs],
-  )
+  const models = useMemo(() => toList(specs?.models), [specs])
+  const financeOptions = useMemo(() => toList(specs?.financeOptions), [specs])
 
   // Sélection par défaut : premier modèle disponible, source du prix affiché.
   // Dérivé plutôt que stocké, pour éviter un effet de synchronisation.
   const defaultModelId = models[0]?.id ?? null
-  const selectedModelId = selectedByTab.models ?? defaultModelId
-
+  const selectedModelId = selectedOptions.modelId ?? defaultModelId
   const selectedModel =
     models.find((model) => model.id === selectedModelId) || models[0] || null
-  const totalPrice =
-    (selectedModel && selectedModel.priceFrom != null
-      ? selectedModel.priceFrom
-      : vehicle?.basePrice) ?? null
 
   const activeFinance =
     financeOptions.find((option) => option.id === selectedFinanceId) ||
@@ -101,10 +159,48 @@ function Configure() {
     null
   const monthlyPrice = activeFinance?.monthly ?? null
 
-  const selectedOptionIds = useMemo(() => {
-    const id = selectedByTab.optionalEquipment
-    return id == null ? [] : [id]
-  }, [selectedByTab.optionalEquipment])
+  // Un accessoire en rupture ne peut pas être acheté : on l'exclut du total
+  // affiché pour ne jamais annoncer un prix qu'un serveur refusera.
+  const selectedAccessories = useMemo(() => {
+    const ids = toList(selectedOptions.accessoryIds)
+    return accessories.filter((item) => ids.includes(item.id) && item.inStock)
+  }, [accessories, selectedOptions.accessoryIds])
+
+  const accessoriesTotal = useMemo(
+    () =>
+      selectedAccessories.reduce(
+        (sum, item) => sum + (Number(item.price) || 0),
+        0,
+      ),
+    [selectedAccessories],
+  )
+
+  // Prix du véhicule seul (hors accessoires) : PriceOverviewModal s'occupe
+  // lui-même d'ajouter les accessoires et la TVA, il ne faut donc PAS lui
+  // passer un total déjà majoré, sinon la ligne « Options » est comptée deux fois.
+  const vehicleBasePrice = useMemo(() => {
+    if (selectedModel && selectedModel.priceFrom != null) {
+      return selectedModel.priceFrom
+    }
+    return vehicle?.basePrice ?? null
+  }, [selectedModel, vehicle?.basePrice])
+
+  // ESTIMATION côté client uniquement : le montant facturé est toujours
+  // recalculé par le serveur à la création de la session de paiement.
+  const totalPrice = useMemo(() => {
+    if (vehicleBasePrice == null) return null
+    return vehicleBasePrice + accessoriesTotal
+  }, [vehicleBasePrice, accessoriesTotal])
+
+  // Couleur de carrosserie peinte dans la vue 360° : on répercute le swatch de
+  // la teinte sélectionnée. Résolu ici plutôt que dans la vue, qui ne connaît
+  // que le véhicule.
+  const bodyColor = useMemo(() => {
+    const colour = toList(specs?.exteriorColours).find(
+      (item) => item.id === selectedOptions.exteriorColourId,
+    )
+    return colour?.swatchColor || null
+  }, [specs?.exteriorColours, selectedOptions.exteriorColourId])
 
   // Un seul observer pilote l'onglet actif : on retient le ratio réel de
   // chaque section (et non le simple franchissement du seuil) pour élire la
@@ -141,8 +237,72 @@ function Configure() {
     return () => observer.disconnect()
   }, [vehicle])
 
+  // AutOsave : à chaque changement de configuration, le panier est réécrit en
+  // base. Le debounce évite une requête par option cliquée.
+  useEffect(() => {
+    if (!vehicle) return undefined
+    if (!hasInteractedRef.current) {
+      hasInteractedRef.current = true
+      return undefined
+    }
+    const timer = setTimeout(() => {
+      api
+        .post(
+          '/cart',
+          { vehicleId: vehicle.id, configurationData: selectedOptions },
+          { headers: { Authorization: `Bearer ${getAuthToken()}` } },
+        )
+        .catch((err) => {
+          console.error('[configurator] autosave du panier impossible :', err)
+        })
+    }, AUTOSAVE_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [selectedOptions, vehicle])
+
+  const getDisplayImage = useCallback(() => {
+    const colour = toList(specs?.exteriorColours).find(
+      (item) => item.id === selectedOptions.exteriorColourId,
+    )
+    if (activeTab === 'exteriorColours' && colour?.image) return colour.image
+
+    const wheel = toList(specs?.alloyWheels).find(
+      (item) => item.id === selectedOptions.alloyWheelId,
+    )
+    if (activeTab === 'alloyWheels' && wheel?.carImage) return wheel.carImage
+
+    const upholstery = toList(specs?.upholstery).find(
+      (item) => item.id === selectedOptions.upholsteryId,
+    )
+    if (activeTab === 'upholstery' && upholstery?.image) return upholstery.image
+
+    return colour?.image || `/api/vehicles/${vehicle?.id}/image`
+  }, [
+    activeTab,
+    specs?.exteriorColours,
+    specs?.alloyWheels,
+    specs?.upholstery,
+    selectedOptions.exteriorColourId,
+    selectedOptions.alloyWheelId,
+    selectedOptions.upholsteryId,
+    vehicle?.id,
+  ])
+
   const handleSelect = useCallback((tab, id) => {
-    setSelectedByTab((prev) => ({ ...prev, [tab]: id }))
+    const key = TAB_OPTION_KEY[tab]
+    if (!key) return
+    setSelectedOptions((prev) => ({ ...prev, [key]: id }))
+  }, [])
+
+  const handleToggleAccessory = useCallback((id) => {
+    setSelectedOptions((prev) => {
+      const current = toList(prev.accessoryIds)
+      return {
+        ...prev,
+        accessoryIds: current.includes(id)
+          ? current.filter((item) => item !== id)
+          : [...current, id],
+      }
+    })
   }, [])
 
   const handleTabSelect = useCallback((tab) => {
@@ -153,6 +313,8 @@ function Configure() {
   }, [])
 
   const handleReset = useCallback(() => {
+    setSelectedOptions(EMPTY_SELECTION)
+    setSelectedFinanceId(null)
     setActiveTab(TABS[0])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
@@ -163,6 +325,37 @@ function Configure() {
 
   const activeIndex = Math.max(TABS.indexOf(activeTab), 0)
   const consumption = specs?.technicalData?.consumption
+
+  const renderSection = (tab) => {
+    const Dedicated = DEDICATED_SECTIONS[tab]
+    if (Dedicated) {
+      return (
+        <Dedicated
+          specs={specs}
+          locale={locale}
+          selectedId={
+            TAB_OPTION_KEY[tab] ? selectedOptions[TAB_OPTION_KEY[tab]] : undefined
+          }
+          selectedIds={selectedOptions.accessoryIds}
+          accessories={accessories}
+          onSelect={(id) => handleSelect(tab, id)}
+          onToggle={handleToggleAccessory}
+        />
+      )
+    }
+    return (
+      <OptionSection
+        tabKey={tab}
+        label={t(`configure.tabs.${tab}`)}
+        specs={specs}
+        selectedId={
+          tab === 'models' ? selectedOptions.modelId ?? defaultModelId : undefined
+        }
+        onSelect={(id) => handleSelect(tab, id)}
+        locale={locale}
+      />
+    )
+  }
 
   if (loading) {
     return (
@@ -229,6 +422,7 @@ function Configure() {
           activeTab={activeTab}
           activeIndex={activeIndex}
           onSelect={handleTabSelect}
+          onOpen360={() => setShow3D(true)}
         />
 
         <div className="mx-auto grid w-full max-w-[1800px] gap-8 px-6 md:grid-cols-2">
@@ -236,7 +430,7 @@ function Configure() {
             className="sticky h-[70vh] self-start"
             style={{ top: SCROLL_OFFSET }}
           >
-            <ConfiguratorImage vehicle={vehicle} />
+            <ConfiguratorImage vehicle={vehicle} imageSrc={getDisplayImage()} />
           </div>
 
           <div>
@@ -247,16 +441,7 @@ function Configure() {
                 className="min-h-screen"
                 style={{ scrollMarginTop: SCROLL_OFFSET }}
               >
-                <OptionSection
-                  tabKey={tab}
-                  label={t(`configure.tabs.${tab}`)}
-                  specs={specs}
-                  selectedId={
-                    selectedByTab[tab] ?? (tab === 'models' ? defaultModelId : undefined)
-                  }
-                  onSelect={(id) => handleSelect(tab, id)}
-                  locale={locale}
-                />
+                {renderSection(tab)}
               </section>
             ))}
           </div>
@@ -304,8 +489,9 @@ function Configure() {
       <PriceOverviewModal
         open={openModal === 'priceOverview'}
         specs={specs}
-        basePrice={totalPrice ?? 0}
-        selectedOptionIds={selectedOptionIds}
+        basePrice={vehicleBasePrice ?? 0}
+        accessories={accessories}
+        selectedIds={selectedOptions.accessoryIds}
         locale={locale}
         onClose={closeModal}
       />
@@ -314,6 +500,22 @@ function Configure() {
         vehicle={vehicle}
         onClose={closeModal}
       />
+
+      {show3D && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0b0f]">
+              <LoadingSpinner3D />
+            </div>
+          }
+        >
+          <ThreeSixtyViewer
+            vehicle={vehicle}
+            bodyColor={bodyColor}
+            onClose={() => setShow3D(false)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

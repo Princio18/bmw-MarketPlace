@@ -4,10 +4,13 @@ import { Maximize2, X } from 'lucide-react'
 
 const FALLBACK_IMAGE = '/images/placeholder-vehicle.svg'
 
-function ConfiguratorImage({ vehicle }) {
+// `imageSrc` est calculé par Configure.jsx (getDisplayImage) : l'image suit
+// l'onglet actif et la couleur / jante / sellerie sélectionnée. À défaut, on
+// retombe sur la photo du véhicule.
+function ConfiguratorImage({ vehicle, imageSrc }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
-  const src = vehicle.image || `/api/vehicles/${vehicle.id}/image`
+  const src = imageSrc || vehicle.image || `/api/vehicles/${vehicle.id}/image`
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-sm bg-gray-50">

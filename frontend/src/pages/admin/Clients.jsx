@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X, Package, ShoppingBag, Heart } from 'lucide-react'
 import api from '@/services/api'
@@ -7,6 +7,52 @@ import { formatPrice } from '@/lib/price'
 import { useAdminSearch } from '@/context/useAdminSearch'
 
 const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
+
+// Rafraîchissement du panneau client : assez lent pour ne pas charger la base,
+// assez vif pour qu'un commercial voie la configuration du client changer en
+// direct pendant qu'il discute avec lui.
+const DETAIL_POLL_MS = 15000
+
+// Correspondance entre les clés stockées dans configuration_data et les listes
+// de specs du véhicule, dans l'ordre d'affichage.
+const CONFIG_ROWS = [
+  { key: 'modelId', list: 'models', label: 'configModel' },
+  { key: 'engineId', list: 'engines', label: 'configEngine' },
+  { key: 'exteriorColourId', list: 'exteriorColours', label: 'configExterior' },
+  { key: 'alloyWheelId', list: 'alloyWheels', label: 'configWheels' },
+  { key: 'upholsteryId', list: 'upholstery', label: 'configUpholstery' },
+]
+
+const toList = (value) => (Array.isArray(value) ? value : [])
+
+// La colonne `configuration_data` peut être renvoyée en JSONB (objet) ou en
+// texte selon la forme du jsonb driver : on accepte les deux.
+function asObject(value) {
+  if (value && typeof value === 'object') return value
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    } catch {
+      return {}
+    }
+  }
+  return {}
+}
+
+// Catalogue des accessoires chargé une seule fois par session admin : il est
+// partagé par tous les clients consultés et n'a aucune raison d'être rechargé
+// à chaque ouverture de panneau.
+let accessoriesPromise = null
+function loadAccessories() {
+  if (!accessoriesPromise) {
+    accessoriesPromise = api
+      .get('/accessories')
+      .then(({ data }) => toList(data?.accessories))
+      .catch(() => [])
+  }
+  return accessoriesPromise
+}
 
 function StatusPill({ status }) {
   const { t } = useTranslation('admin')
@@ -28,7 +74,128 @@ function StatusPill({ status }) {
   )
 }
 
-function ClientDetail({ clientData, onClose }) {
+/**
+ * Traduit les identifiants stockés dans le panier en libellés lisibles en
+ * s'appuyant sur les specs du véhicule. Un identifiant inconnu (option
+ * supprimée du catalogue) reste affiché tel quel plutôt que masqué : c'est
+ * précisément l'information qu'un vendeur doit voir.
+ */
+function ConfigurationSummary({ cart, accessories }) {
+  const { t } = useTranslation('admin')
+
+  // Les deux blobs arrivent du serveur : on les convertit une seule fois pour
+  // que les memos ci-dessous aient une dépendance stable.
+  const specs = useMemo(() => asObject(cart.specs), [cart.specs])
+  const configuration = useMemo(
+    () => asObject(cart.configurationData),
+    [cart.configurationData],
+  )
+
+  const rows = useMemo(
+    () =>
+      CONFIG_ROWS.map(({ key, list, label }) => {
+        const id = configuration[key]
+        if (!id) return null
+        const option = toList(specs[list]).find((item) => item?.id === id)
+        return {
+          key,
+          label: t(`clients.${label}`),
+          value: option?.name || id,
+          hint: option?.code || null,
+        }
+      }).filter(Boolean),
+    [configuration, specs, t],
+  )
+
+  const selectedAccessories = useMemo(() => {
+    // Dédupliqué : un identifiant en double ferait collision de clé React et
+    // gonflerait le total alors que le serveur ne le retient qu'une fois.
+    const ids = [...new Set(toList(configuration.accessoryIds))]
+    return ids.map((id) => {
+      const accessory = accessories.find((item) => item?.id === id)
+      return {
+        id,
+        name: accessory?.name || id,
+        // Un accessoire absent du catalogue public est archivé ou expiré : le
+        // serveur refuserait la commande, on l'exclut donc de l'estimation.
+        price: accessory && accessory.inStock ? Number(accessory.price) || 0 : null,
+      }
+    })
+  }, [configuration.accessoryIds, accessories])
+
+  if (rows.length === 0 && selectedAccessories.length === 0) {
+    return (
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        {t('clients.configNone')}
+      </p>
+    )
+  }
+
+  // ESTIMATION : le prix affiché au client peut différer du montant facturé,
+  // qui est toujours recalculé par le serveur à la création du paiement.
+  const model = toList(specs.models).find(
+    (item) => item?.id === configuration.modelId,
+  )
+  const base = model?.priceFrom ?? cart.basePrice ?? 0
+  const accessoriesTotal = selectedAccessories.reduce(
+    (sum, item) => sum + (item.price ?? 0),
+    0,
+  )
+
+  return (
+    <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-gray-700">
+      <dl className="space-y-1.5">
+        {rows.map((row) => (
+          <div key={row.key} className="flex items-baseline justify-between gap-3 text-xs">
+            <dt className="shrink-0 text-gray-500 dark:text-gray-400">{row.label}</dt>
+            <dd className="truncate text-right font-medium text-gray-900 dark:text-white">
+              {row.value}
+              {row.hint && (
+                <span className="ml-1 font-normal text-gray-400">{row.hint}</span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      {selectedAccessories.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+            {t('clients.configAccessories')}
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            {selectedAccessories.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-baseline justify-between gap-3 text-xs"
+              >
+                <span className="truncate text-gray-600 dark:text-gray-300">
+                  {item.name}
+                </span>
+                <span className="shrink-0 text-gray-500 dark:text-gray-400">
+                  {item.price == null
+                    ? t('clients.configUnavailable')
+                    : formatPrice(item.price, 'en-GB')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-zinc-200 pt-2 text-xs dark:border-gray-700">
+        <span className="font-semibold text-gray-700 dark:text-gray-300">
+          {t('clients.estimatedTotal')}
+        </span>
+        <span className="font-semibold text-gray-900 dark:text-white">
+          {formatPrice(base + accessoriesTotal, 'en-GB')}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function ClientDetail({ clientData, accessories, onClose }) {
   const { t, i18n } = useTranslation('admin')
   const lang = i18n.resolvedLanguage || i18n.language
 
@@ -116,13 +283,7 @@ function ClientDetail({ clientData, onClose }) {
                 <span>{formatPrice(cart.basePrice, 'en-GB')}</span>
                 <span>{formatDate(cart.updatedAt)}</span>
               </div>
-              {cart.configurationData && (
-                <p className="mt-2 break-words text-xs text-gray-500 dark:text-gray-400">
-                  {typeof cart.configurationData === 'string'
-                    ? cart.configurationData
-                    : JSON.stringify(cart.configurationData)}
-                </p>
-              )}
+              <ConfigurationSummary cart={cart} accessories={accessories} />
             </div>
           )}
         </section>
@@ -167,6 +328,7 @@ function Clients() {
   const [error, setError] = useState(false)
   const [selected, setSelected] = useState(null)
   const [detail, setDetail] = useState(null)
+  const [accessories, setAccessories] = useState([])
 
   useEffect(() => {
     api
@@ -176,16 +338,48 @@ function Clients() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleSelect = async (id) => {
-    setSelected(id)
-    setDetail(null)
-    try {
-      const { data } = await api.get(`/admin/clients/${id}`, authHeader)
-      setDetail(data)
-    } catch {
-      setDetail(null)
+  // Le catalogue est utile dès qu'un panier contient des accessoires.
+  useEffect(() => {
+    let cancelled = false
+    loadAccessories().then((list) => {
+      if (!cancelled) setAccessories(list)
+    })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [])
+
+  // Chargement du détail + rafraîchissement périodique tant qu'un client est
+  // sélectionné. L'intervalle est détruit dès que le panneau se ferme
+  // (`selected` repasse à null) : aucune requête ne subsiste en arrière-plan.
+  useEffect(() => {
+    if (!selected) return undefined
+    let cancelled = false
+
+    const load = () => {
+      api
+        .get(`/admin/clients/${selected}`, authHeader)
+        .then(({ data }) => {
+          if (!cancelled) setDetail(data)
+        })
+        .catch(() => {
+          if (!cancelled) setDetail(null)
+        })
+    }
+
+    load()
+    const interval = setInterval(load, DETAIL_POLL_MS)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [selected])
+
+  const handleSelect = useCallback((id) => {
+    setDetail(null)
+    setSelected(id)
+  }, [])
 
   const filtered = clients.filter((client) =>
     client.email.toLowerCase().includes(query.trim().toLowerCase()),
@@ -250,6 +444,7 @@ function Clients() {
       {selected && detail && (
         <ClientDetail
           clientData={detail}
+          accessories={accessories}
           onClose={() => {
             setSelected(null)
             setDetail(null)

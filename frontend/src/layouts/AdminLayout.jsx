@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   CreditCard,
   Car,
+  Package,
   FileBarChart2,
   Settings,
   LogOut,
@@ -62,6 +63,12 @@ function Sidebar() {
       icon: Car,
       label: t('sidebar.vehicles'),
       show: hasPermission('can_manage_vehicles') || hasPermission('can_manage_reviews'),
+    },
+    {
+      to: '/admin/accessories',
+      icon: Package,
+      label: t('sidebar.accessories'),
+      show: hasPermission('can_manage_vehicles'),
     },
     {
       to: '/admin/reports',

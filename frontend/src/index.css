@@ -15,6 +15,28 @@
   --color-bmw-dark: #0f1a2a;
   --font-montserrat: 'Montserrat', system-ui, sans-serif;
   --font-manrope: 'Manrope', system-ui, sans-serif;
+
+  --animate-wheel-bounce-left: wheel-bounce-left 1.4s ease-in-out infinite;
+  --animate-wheel-bounce-right: wheel-bounce-right 1.4s ease-in-out infinite;
+
+  @keyframes wheel-bounce-left {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+  @keyframes wheel-bounce-right {
+    0%,
+    100% {
+      transform: translateY(-3px);
+    }
+    50% {
+      transform: translateY(0);
+    }
+  }
 }
 
 @layer base {

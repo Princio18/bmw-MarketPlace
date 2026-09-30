@@ -14,8 +14,9 @@
     "seed:roles": "node scripts/seedRoles.js",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:vehicles": "node scripts/seedVehicles.js",
+    "seed:accessories": "node scripts/seedAccessories.js",
     "seed:configurator-specs": "node scripts/seedConfiguratorSpecs.js",
-    "db:seed": "npm run seed:roles && npm run seed:admin && npm run seed:vehicles",
+    "db:seed": "npm run seed:roles && npm run seed:admin && npm run seed:vehicles && npm run seed:accessories && npm run seed:configurator-specs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

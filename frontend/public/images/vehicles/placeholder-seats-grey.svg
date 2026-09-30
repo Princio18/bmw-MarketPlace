@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4f5f7"/>
+      <stop offset="100%" stop-color="#e2e5ea"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <g transform="translate(0,6)">
+    <ellipse cx="400" cy="330" rx="190" ry="16" fill="#000" opacity="0.10"/>
+    <path d="M300 300 L300 176 Q300 148 328 140 L372 130 L372 300 Z" fill="#8d8f93"/>
+    <path d="M372 300 L372 96 Q372 66 402 66 L462 66 Q494 66 498 96 L508 300 Z" fill="#8d8f93"/>
+    <path d="M402 66 L462 66 Q494 66 498 96 L508 300 L462 300 L452 100 L400 100 L398 300 L372 300 L372 96 Q372 66 402 66 Z" fill="#000" opacity="0.10"/>
+    <path d="M398 118 L478 118 M398 158 L484 158 M398 198 L488 198" stroke="#000" stroke-opacity="0.13" stroke-width="3"/>
+    <rect x="404" y="96" width="12" height="204" fill="#fff" opacity="0.35"/>
+    <rect x="384" y="296" width="140" height="20" rx="8" fill="#2a2d31"/>
+  </g>
+  <text x="400" y="360" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#7b818a" letter-spacing="2.4">COAL GREY</text>
+</svg>

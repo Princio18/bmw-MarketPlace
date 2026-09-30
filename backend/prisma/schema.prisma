@@ -74,6 +74,20 @@ model vehicles {
   favorites favorites[]
 }
 
+model accessories {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String    @db.VarChar(150)
+  description         String?
+  price               Decimal   @db.Decimal(10, 2)
+  image_data          Bytes?
+  image_mime_type     String?   @db.VarChar(50)
+  stock_quantity      Int       @default(0)
+  badge               String?   @db.VarChar(50)
+  requires_adjustment Boolean   @default(false)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+  deleted_at          DateTime? @db.Timestamp(6)
+}
+
 model carts {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id            String    @db.Uuid

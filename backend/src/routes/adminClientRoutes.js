@@ -49,7 +49,9 @@ async function getClient(req, res) {
     ),
     prisma.$queryRawUnsafe(
       `SELECT c.id, c.configuration_data AS "configurationData", c.updated_at AS "updatedAt",
-              v.model_name AS "modelName", v.base_price::float8 AS "basePrice",
+              v.id AS "vehicleId", v.model_name AS "modelName",
+              v.variant_label AS "variantLabel", v.base_price::float8 AS "basePrice",
+              v.specs,
               '/api/vehicles/' || v.id || '/image' AS "image"
          FROM carts c
          JOIN vehicles v ON v.id = c.vehicle_id

@@ -409,17 +409,64 @@
       "exteriorColours": "Exterior Colour",
       "alloyWheels": "Alloy Wheels",
       "upholstery": "Upholstery",
-      "interiorTrims": "Interior Trims",
-      "packages": "Packages",
       "optionalEquipment": "Optional Equipment",
       "charging": "Charging",
       "summary": "Summary"
     },
-    "steps": {
-      "counter": "{{current}} / {{total}}",
-      "view360": "360° view",
-      "scrollTabs": "Scroll tabs"
+    "subtabs": {
+      "showAll": "Show all",
+      "metallic": "Metallic",
+      "bmwIndividual": "BMW Individual",
+      "leatherette": "Leatherette",
+      "cloth": "Cloth",
+      "leather": "Leather",
+      "size20": "20\"",
+      "size21": "21\""
     },
+    "section": {
+      "compare": "Compare",
+      "showDetails": "Show details",
+      "from": "From {{price}}",
+      "included": "Included",
+      "paintCode": "Paint code {{code}}",
+      "inStock": "In stock",
+      "outOfStock": "Out of stock",
+      "lowStock": "Only {{count}} left",
+      "empty": "No options configured yet.",
+      "unavailable": "No longer available",
+      "requiresAdjustment": "Requires adjustment",
+      "previous": "Previous accessories",
+      "next": "Next accessories"
+    },
+    "engines": {
+      "rangeLabel": "Electric range (WLTP)",
+      "enginePerformance": "Engine performance",
+      "topSpeed": "Top speed",
+      "acceleration": "0-62 mph",
+      "rangeNote": "Range figures are preliminary and may vary with the selected equipment."
+    },
+    "accessories": {
+      "total": "Accessories total",
+      "count": "{{count}} selected",
+      "includedInTotal": "Included in the total price",
+      "want": "Want",
+      "added": "Added ✓"
+    },
+    "steps": {
+    "counter": "{{current}} / {{total}}",
+    "view360": "360° view",
+    "scrollTabs": "Scroll tabs"
+  },
+  "view360": {
+    "preparing": "Preparing your 360° experience...",
+    "close": "Close the 360° view",
+    "viewOut": "Out",
+    "viewIn": "In",
+    "interiorUnavailable": "Interior view not available yet.",
+    "exteriorUnavailable": "The 3D model for this vehicle is not available yet.",
+    "closeViewer": "Close",
+    "loading": "Loading 360° view…"
+  },
     "image": {
       "expand": "Expand image"
     },

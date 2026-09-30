@@ -4,7 +4,8 @@
     "confirm": "Confirm",
     "close": "Close",
     "loading": "Loading…",
-    "error": "Something went wrong."
+    "error": "Something went wrong.",
+    "saving": "Saving…"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -12,9 +13,60 @@
     "orders": "Orders",
     "payment": "Payment",
     "vehicles": "Vehicles",
+    "accessories": "Accessories",
     "reports": "Reports",
     "settings": "Settings",
     "logout": "Log out"
+  },
+  "accessories": {
+    "title": "Accessories",
+    "new": "New accessory",
+    "empty": "No accessory found.",
+    "noAccess": "You do not have permission to manage accessories.",
+    "image": "Image",
+    "name": "Name",
+    "price": "Price",
+    "stock": "Stock",
+    "status": "Status",
+    "actions": "Actions",
+    "createdAt": "Created",
+    "edit": "Edit",
+    "remove": "Delete",
+    "restore": "Restore",
+    "removeTitle": "Delete accessory",
+    "removeMessage": "Delete \"{{name}}\"? It will no longer be purchasable.",
+    "removeConfirm": "Delete",
+    "removed": "Removed",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "lowStock": "Low stock · {{count}}",
+    "requiresAdjustment": "Requires adjustment"
+  },
+  "accessoryForm": {
+    "name": "Name",
+    "nameRequired": "Name is required.",
+    "description": "Description",
+    "price": "Price (£)",
+    "priceInvalid": "Enter a valid price.",
+    "stockQuantity": "Stock quantity",
+    "stockInvalid": "Enter a whole number of 0 or more.",
+    "badge": "Badge",
+    "badgePlaceholder": "e.g. For you",
+    "requiresAdjustment": "Requires adjustment",
+    "image": "Image",
+    "currentImage": "Current image",
+    "imagePlaceholder": "No image yet — a placeholder will be shown.",
+    "imageEditHint": "Leave empty to keep the current image.",
+    "create": "Create accessory",
+    "created": "Accessory created.",
+    "edit": "Save changes",
+    "updated": "Accessory updated.",
+    "genericError": "Unable to save the accessory."
+  },
+  "accessoryFormPage": {
+    "back": "Back to accessories",
+    "newTitle": "New accessory",
+    "editTitle": "Edit accessory"
   },
   "profileBlock": {
     "superAdmin": "Super Admin",
@@ -72,7 +124,16 @@
     "noCart": "No active cart.",
     "noFavorites": "No favorites.",
     "reviewed": "Reviewed",
-    "notReviewed": "Not reviewed"
+    "notReviewed": "Not reviewed",
+    "configModel": "Model",
+    "configEngine": "Engine",
+    "configExterior": "Exterior",
+    "configWheels": "Wheels",
+    "configUpholstery": "Interior",
+    "configAccessories": "Accessories",
+    "configNone": "Configuration not started.",
+    "configUnavailable": "Unavailable",
+    "estimatedTotal": "Estimated total"
   },
   "orders": {
     "title": "Orders",

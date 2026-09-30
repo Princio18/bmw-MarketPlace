@@ -4,7 +4,8 @@
     "confirm": "Confirmer",
     "close": "Fermer",
     "loading": "Chargement…",
-    "error": "Une erreur est survenue."
+    "error": "Une erreur est survenue.",
+    "saving": "Enregistrement…"
   },
   "sidebar": {
     "dashboard": "Tableau de bord",
@@ -12,9 +13,60 @@
     "orders": "Commandes",
     "payment": "Paiement",
     "vehicles": "Véhicules",
+    "accessories": "Accessoires",
     "reports": "Rapports",
     "settings": "Paramètres",
     "logout": "Déconnexion"
+  },
+  "accessories": {
+    "title": "Accessoires",
+    "new": "Nouvel accessoire",
+    "empty": "Aucun accessoire trouvé.",
+    "noAccess": "Vous n'avez pas la permission de gérer les accessoires.",
+    "image": "Image",
+    "name": "Nom",
+    "price": "Prix",
+    "stock": "Stock",
+    "status": "Statut",
+    "actions": "Actions",
+    "createdAt": "Créé le",
+    "edit": "Modifier",
+    "remove": "Supprimer",
+    "restore": "Restaurer",
+    "removeTitle": "Supprimer l'accessoire",
+    "removeMessage": "Supprimer « {{name}} » ? Il ne sera plus achetable.",
+    "removeConfirm": "Supprimer",
+    "removed": "Supprimé",
+    "inStock": "En stock",
+    "outOfStock": "Rupture de stock",
+    "lowStock": "Stock faible · {{count}}",
+    "requiresAdjustment": "Nécessite un réglage"
+  },
+  "accessoryForm": {
+    "name": "Nom",
+    "nameRequired": "Le nom est obligatoire.",
+    "description": "Description",
+    "price": "Prix (£)",
+    "priceInvalid": "Saisissez un prix valide.",
+    "stockQuantity": "Quantité en stock",
+    "stockInvalid": "Saisissez un entier supérieur ou égal à 0.",
+    "badge": "Badge",
+    "badgePlaceholder": "ex. Pour vous",
+    "requiresAdjustment": "Nécessite un réglage",
+    "image": "Image",
+    "currentImage": "Image actuelle",
+    "imagePlaceholder": "Aucune image — une image générique sera affichée.",
+    "imageEditHint": "Laissez vide pour conserver l'image actuelle.",
+    "create": "Créer l'accessoire",
+    "created": "Accessoire créé.",
+    "edit": "Enregistrer",
+    "updated": "Accessoire mis à jour.",
+    "genericError": "Impossible d'enregistrer l'accessoire."
+  },
+  "accessoryFormPage": {
+    "back": "Retour aux accessoires",
+    "newTitle": "Nouvel accessoire",
+    "editTitle": "Modifier l'accessoire"
   },
   "profileBlock": {
     "superAdmin": "Super Admin",
@@ -72,7 +124,16 @@
     "noCart": "Aucun panier actif.",
     "noFavorites": "Aucun favori.",
     "reviewed": "Commenté",
-    "notReviewed": "Non commenté"
+    "notReviewed": "Non commenté",
+    "configModel": "Modèle",
+    "configEngine": "Motorisation",
+    "configExterior": "Extérieur",
+    "configWheels": "Jantes",
+    "configUpholstery": "Intérieur",
+    "configAccessories": "Accessoires",
+    "configNone": "Configuration non commencée.",
+    "configUnavailable": "Indisponible",
+    "estimatedTotal": "Total estimé"
   },
   "orders": {
     "title": "Commandes",

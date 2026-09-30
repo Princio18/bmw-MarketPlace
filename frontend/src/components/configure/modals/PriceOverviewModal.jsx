@@ -6,23 +6,25 @@ import { formatPrice } from '../../../lib/price'
 // priceFrom est un prix UK TVA incluse : la décomposition affichée
 // recalcule la base hors taxes puis la TVA correspondante, pour que la
 // somme des lignes redonne exactement le prix du modèle.
+//
+// `accessories` porte le catalogue résolu (GET /api/accessories) : les prix
+// proviennent de la base, jamais du payload de configuration.
 function PriceOverviewModal({
   open,
   specs,
   basePrice,
-  selectedOptionIds,
+  accessories,
+  selectedIds,
   locale,
   onClose,
 }) {
   const { t } = useTranslation()
 
   const rows = useMemo(() => {
-    const options = Array.isArray(specs?.optionalEquipment)
-      ? specs.optionalEquipment
-      : []
-    const selected = Array.isArray(selectedOptionIds)
-      ? options.filter((option) => selectedOptionIds.includes(option.id))
-      : []
+    const ids = Array.isArray(selectedIds) ? selectedIds : []
+    const selected = (Array.isArray(accessories) ? accessories : []).filter(
+      (item) => ids.includes(item.id) && item.inStock,
+    )
     const optionsTotal = selected.reduce(
       (sum, option) => sum + (Number(option.price) || 0),
       0,
@@ -40,7 +42,7 @@ function PriceOverviewModal({
       { key: 'otrFee', label: 'otrFee', amount: otrFee },
       { key: 'total', label: 'total', amount: total, strong: true },
     ]
-  }, [basePrice, specs, selectedOptionIds])
+  }, [basePrice, specs, accessories, selectedIds])
 
   return (
     <Modal

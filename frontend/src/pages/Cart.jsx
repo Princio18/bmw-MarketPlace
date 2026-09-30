@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/layout/Navbar'
@@ -12,6 +12,7 @@ import { formatPrice } from '../lib/price'
 function Cart() {
   const { t } = useTranslation()
   const [cart, setCart] = useState(null)
+  const [accessories, setAccessories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [paying, setPaying] = useState(false)
@@ -24,6 +25,29 @@ function Cart() {
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
+
+  // Catalogue des accessoires : sert à afficher le détail du panier. Le montant
+  // réellement facturé reste recalculé par le serveur à la création de la
+  // session Stripe — cette liste n'est qu'un miroir de l'affichage.
+  useEffect(() => {
+    api
+      .get('/accessories')
+      .then(({ data }) => setAccessories(Array.isArray(data?.accessories) ? data.accessories : []))
+      .catch(() => setAccessories([]))
+  }, [])
+
+  const selectedAccessories = useMemo(() => {
+    const ids = Array.isArray(cart?.configurationData?.accessoryIds)
+      ? cart.configurationData.accessoryIds
+      : []
+    return accessories.filter((item) => ids.includes(item.id))
+  }, [accessories, cart?.configurationData])
+
+  const accessoriesTotal = selectedAccessories.reduce(
+    (sum, item) => sum + (Number(item.price) || 0),
+    0,
+  )
+  const total = cart?.basePrice != null ? cart.basePrice + accessoriesTotal : null
 
   const handlePay = async () => {
     if (!cart) return
@@ -118,14 +142,56 @@ function Cart() {
 
               <div className="flex flex-1 flex-col gap-5">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('cart.totalPrice')}
-                  </p>
-                  <p className="font-manrope mt-1 text-3xl font-semibold text-gray-900 dark:text-white">
-                    {cart.basePrice != null
-                      ? formatPrice(cart.basePrice, 'en-GB')
-                      : t('allModels.priceOnRequest')}
-                  </p>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {cart.modelName}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {cart.basePrice != null
+                        ? formatPrice(cart.basePrice, 'en-GB')
+                        : t('allModels.priceOnRequest')}
+                    </span>
+                  </div>
+
+                  {selectedAccessories.map((item) => (
+                    <div
+                      key={item.id}
+                      className="mt-2 flex items-baseline justify-between gap-4"
+                    >
+                      <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt=""
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
+                            className="h-8 w-8 rounded border border-zinc-200 bg-white object-contain dark:border-gray-700"
+                          />
+                        )}
+                        {item.name}
+                        {!item.inStock && (
+                          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700">
+                            {t('configure.section.outOfStock')}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {formatPrice(item.price, 'en-GB')}
+                      </span>
+                    </div>
+                  ))}
+
+                  <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-zinc-200 pt-4 dark:border-gray-700">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      {t('cart.totalPrice')}
+                    </span>
+                    <span className="font-manrope text-3xl font-semibold text-gray-900 dark:text-white">
+                      {total != null
+                        ? formatPrice(total, 'en-GB')
+                        : t('allModels.priceOnRequest')}
+                    </span>
+                  </div>
                 </div>
 
                 {cart.basePrice == null ? (

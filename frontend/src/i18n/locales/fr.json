@@ -409,17 +409,64 @@
       "exteriorColours": "Couleur extérieure",
       "alloyWheels": "Jantes",
       "upholstery": "Sellerie",
-      "interiorTrims": "Garnitures intérieures",
-      "packages": "Packs",
       "optionalEquipment": "Options",
       "charging": "Recharge",
       "summary": "Récapitulatif"
     },
-    "steps": {
-      "counter": "{{current}} / {{total}}",
-      "view360": "Vue 360°",
-      "scrollTabs": "Défiler les onglets"
+    "subtabs": {
+      "showAll": "Tout afficher",
+      "metallic": "Métaliques",
+      "bmwIndividual": "BMW Individual",
+      "leatherette": "Veganza",
+      "cloth": "Tissu",
+      "leather": "Cuir",
+      "size20": "20\"",
+      "size21": "21\""
     },
+    "section": {
+      "compare": "Comparer",
+      "showDetails": "Afficher les détails",
+      "from": "À partir de {{price}}",
+      "included": "Inclus",
+      "paintCode": "Code peinture {{code}}",
+      "inStock": "En stock",
+      "outOfStock": "Rupture de stock",
+      "lowStock": "Plus que {{count}}",
+      "empty": "Aucune option configurée pour le moment.",
+      "unavailable": "Plus disponible",
+      "requiresAdjustment": "Nécessite un réglage",
+      "previous": "Accessoires précédents",
+      "next": "Accessoires suivants"
+    },
+    "engines": {
+      "rangeLabel": "Autonomie électrique (WLTP)",
+      "enginePerformance": "Performance du moteur",
+      "topSpeed": "Vitesse maximale",
+      "acceleration": "0-62 mph",
+      "rangeNote": "Les valeurs d'autonomie sont préliminaires et peuvent varier selon les équipements sélectionnés."
+    },
+    "accessories": {
+      "total": "Total des accessoires",
+      "count": "{{count}} sélectionné(s)",
+      "includedInTotal": "Inclus dans le prix total",
+      "want": "Ajouter",
+      "added": "Ajouté ✓"
+    },
+    "steps": {
+    "counter": "{{current}} / {{total}}",
+    "view360": "Vue 360°",
+    "scrollTabs": "Défiler les onglets"
+  },
+  "view360": {
+    "preparing": "Préparation de votre expérience 360°...",
+    "close": "Fermer la vue 360°",
+    "viewOut": "Extérieur",
+    "viewIn": "Intérieur",
+    "interiorUnavailable": "Vue intérieure pas encore disponible.",
+    "exteriorUnavailable": "Le modèle 3D de ce véhicule n'est pas encore disponible.",
+    "closeViewer": "Fermer",
+    "loading": "Chargement de la vue 360°…"
+  },
     "image": {
       "expand": "Agrandir l'image"
     },

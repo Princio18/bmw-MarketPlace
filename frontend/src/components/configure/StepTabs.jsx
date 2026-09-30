@@ -1,11 +1,12 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, RotateCw } from 'lucide-react'
 import { TABS_HEIGHT, NAVBAR_HEIGHT } from './layout'
 
-function StepTabs({ tabs, activeTab, activeIndex, onSelect }) {
+function StepTabs({ tabs, activeTab, activeIndex, onSelect, onOpen360 }) {
   const { t } = useTranslation()
   const trackRef = useRef(null)
+  const tabRefs = useRef({})
 
   const scrollTrackRight = () => {
     const track = trackRef.current
@@ -14,6 +15,17 @@ function StepTabs({ tabs, activeTab, activeIndex, onSelect }) {
     if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 1) return
     track.scrollBy({ left: track.clientWidth, behavior: 'smooth' })
   }
+
+  // Sur mobile la barre déborde : l'onglet actif est brought into view pour
+  // qu'il reste visible sans manipulation manuelle. `block: 'nearest'` évite
+  // de faire remonter la page, le scroll vertical étant géré par la page.
+  useEffect(() => {
+    tabRefs.current[activeTab]?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    })
+  }, [activeTab])
 
   return (
     <div
@@ -25,7 +37,7 @@ function StepTabs({ tabs, activeTab, activeIndex, onSelect }) {
           type="button"
           title={t('configure.steps.view360')}
           aria-label={t('configure.steps.view360')}
-          onClick={() => console.log('360 view — coming soon')}
+          onClick={onOpen360}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
         >
           <RotateCw size={14} />
@@ -48,6 +60,9 @@ function StepTabs({ tabs, activeTab, activeIndex, onSelect }) {
               <button
                 key={tab}
                 type="button"
+                ref={(el) => {
+                  tabRefs.current[tab] = el
+                }}
                 onClick={() => onSelect(tab)}
                 aria-current={isActive ? 'true' : undefined}
                 className={

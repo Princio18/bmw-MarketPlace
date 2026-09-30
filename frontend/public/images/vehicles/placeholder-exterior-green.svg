@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4f5f7"/>
+      <stop offset="100%" stop-color="#e2e5ea"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <g transform="translate(0,10)">
+    <ellipse cx="415" cy="262" rx="330" ry="16" fill="#000" opacity="0.10"/>
+    <path d="M60 236 L60 198 Q64 180 92 174 L200 162 Q252 118 330 108 L510 105 Q576 114 630 148 L720 168 Q762 176 770 198 L772 224 Q770 236 754 236 Z" fill="#1f3d2b"/>
+    <path d="M60 236 L60 198 Q64 180 92 174 L200 162 Q252 118 330 108 L510 105 Q576 114 630 148 L720 168 Q762 176 770 198 L772 224 Q770 236 754 236 Z" fill="url(#body)"/>
+    <path d="M232 168 L312 126 L424 123 L424 163 Z" fill="#5b6b7d"/>
+    <path d="M440 123 L504 124 L586 163 L440 163 Z" fill="#5b6b7d"/>
+    <path d="M232 168 L312 126 L424 123 L424 163 Z" fill="#fff" opacity="0.18"/>
+    <rect x="628" y="186" width="26" height="10" rx="5" fill="#fff8dc"/>
+    <rect x="70" y="186" width="16" height="10" rx="5" fill="#c0392b"/>
+    <g>
+    <circle cx="200" cy="236" r="42" fill="#1d1f22"/>
+    <circle cx="200" cy="236" r="35" fill="#c8ccd2"/>
+    <circle cx="200" cy="236" r="24" fill="#3b3f45"/>
+    <line x1="224.0" y1="236.0" x2="235.0" y2="236.0" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="219.4" y1="250.1" x2="228.3" y2="256.6" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="207.4" y1="258.8" x2="210.8" y2="269.3" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="192.6" y1="258.8" x2="189.2" y2="269.3" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="180.6" y1="250.1" x2="171.7" y2="256.6" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="176.0" y1="236.0" x2="165.0" y2="236.0" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="180.6" y1="221.9" x2="171.7" y2="215.4" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="192.6" y1="213.2" x2="189.2" y2="202.7" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="207.4" y1="213.2" x2="210.8" y2="202.7" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="219.4" y1="221.9" x2="228.3" y2="215.4" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="200" cy="236" r="16" fill="#c8ccd2"/>
+  </g>
+    <g>
+    <circle cx="640" cy="236" r="42" fill="#1d1f22"/>
+    <circle cx="640" cy="236" r="35" fill="#c8ccd2"/>
+    <circle cx="640" cy="236" r="24" fill="#3b3f45"/>
+    <line x1="664.0" y1="236.0" x2="675.0" y2="236.0" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="659.4" y1="250.1" x2="668.3" y2="256.6" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="647.4" y1="258.8" x2="650.8" y2="269.3" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="632.6" y1="258.8" x2="629.2" y2="269.3" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="620.6" y1="250.1" x2="611.7" y2="256.6" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="616.0" y1="236.0" x2="605.0" y2="236.0" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="620.6" y1="221.9" x2="611.7" y2="215.4" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="632.6" y1="213.2" x2="629.2" y2="202.7" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="647.4" y1="213.2" x2="650.8" y2="202.7" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <line x1="659.4" y1="221.9" x2="668.3" y2="215.4" stroke="#3b3f45" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="640" cy="236" r="16" fill="#c8ccd2"/>
+  </g>
+  </g><text x="400" y="352" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#7b818a" letter-spacing="2.4">DARK GREEN</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4f5f7"/>
+      <stop offset="100%" stop-color="#e2e5ea"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <g>
+    <circle cx="400" cy="200" r="150" fill="#eceef1"/>
+    <circle cx="400" cy="200" r="128" fill="#232629"/>
+    <circle cx="400" cy="200" r="118" fill="#c8ccd2"/>
+    <circle cx="400" cy="200" r="82" fill="#1b1d20"/>
+    <path d="M374.0 180 L426.0 180 L412.0 171.0 L388.0 171.0 Z" fill="#c8ccd2"/>
+    <path d="M374.0 180 L426.0 180 L451.0 199.3 L427.0 199.3 Z" fill="#c8ccd2"/>
+    <path d="M374.0 180 L426.0 180 L436.1 245.2 L412.1 245.2 Z" fill="#c8ccd2"/>
+    <path d="M374.0 180 L426.0 180 L387.9 245.2 L363.9 245.2 Z" fill="#c8ccd2"/>
+    <path d="M374.0 180 L426.0 180 L373.0 199.3 L349.0 199.3 Z" fill="#c8ccd2"/>
+    <circle cx="400" cy="200" r="34" fill="#c8ccd2"/>
+    <circle cx="400" cy="200" r="30" fill="#0066b1"/>
+  </g><text x="400" y="352" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#7b818a" letter-spacing="2.4">21" AERODYNAMIC WHEEL</text>
+</svg>

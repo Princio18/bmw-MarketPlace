@@ -26,6 +26,8 @@ import Orders from './pages/admin/Orders'
 import Payment from './pages/admin/Payment'
 import Vehicles from './pages/admin/Vehicles'
 import VehicleFormPage from './pages/admin/VehicleFormPage'
+import Accessories from './pages/admin/Accessories'
+import AccessoryFormPage from './pages/admin/AccessoryFormPage'
 import Reports from './pages/admin/Reports'
 import Settings from './pages/admin/Settings'
 import MyOrders from './pages/MyOrders'
@@ -100,6 +102,9 @@ function App() {
         <Route path="vehicles" element={<Vehicles />} />
         <Route path="vehicles/new" element={<VehicleFormPage />} />
         <Route path="vehicles/:id/edit" element={<VehicleFormPage />} />
+        <Route path="accessories" element={<Accessories />} />
+        <Route path="accessories/new" element={<AccessoryFormPage />} />
+        <Route path="accessories/:id/edit" element={<AccessoryFormPage />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
       </Route>
