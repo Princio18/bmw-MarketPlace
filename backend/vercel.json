@@ -7,5 +7,6 @@
   },
   "env": {
     "NODE_VERSION": "22"
-  }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
 }
