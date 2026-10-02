@@ -9,7 +9,7 @@ const CART_SELECT = `
     c.is_validated AS "isValidated",
     v.id AS "vehicleId",
     v.model_name AS "modelName",
-    '/api/vehicles/' || v.id || '/image' AS "image",
+    '/api/vehicles/' || v.id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image",
     v.base_price::float8 AS "basePrice"
   FROM carts c
   JOIN vehicles v ON v.id = c.vehicle_id

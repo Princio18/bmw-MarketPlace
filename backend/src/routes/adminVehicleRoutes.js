@@ -4,6 +4,7 @@ const { authenticate, requireRole } = require('../middleware/auth')
 const { checkPermission } = require('../middleware/checkPermission')
 const upload = require('../middleware/upload')
 const { ROLES } = require('../roles')
+const { buildImageFields } = require('../utils/imagePersistence')
 
 const DRIVETRAINS = ['electric', 'hybrid', 'petrol', 'diesel', 'concept', 'protection']
 const DEFAULT_VARIANT = 'Models'
@@ -19,7 +20,7 @@ const VEHICLE_SELECT = `
     v.drivetrain,
     v.is_m_performance AS "isMPerformance",
     v.base_price::float8 AS "basePrice",
-    '/api/vehicles/' || v.id || '/image' AS "image",
+    '/api/vehicles/' || v.id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image",
     (SELECT COUNT(*) FROM favorites f WHERE f.vehicle_id = v.id)::int AS "favoritesCount",
     (SELECT COUNT(*) FROM carts c
        WHERE c.vehicle_id = v.id AND c.is_validated = false AND c.deleted_at IS NULL)::int
@@ -140,8 +141,10 @@ async function createVehicle(req, res) {
     return res.status(400).json({ error: errors.join(' ') })
   }
 
+  const id = require('crypto').randomUUID()
   const created = await prisma.vehicles.create({
     data: {
+      id,
       model_name: modelName.trim(),
       category: category.trim(),
       series: series.trim(),
@@ -150,8 +153,7 @@ async function createVehicle(req, res) {
       is_new: isNew,
       is_m_performance: isMPerformance,
       base_price: price.value,
-      image_data: req.file ? req.file.buffer : null,
-      image_mime_type: req.file ? req.file.mimetype : null,
+      ...(await buildImageFields({ file: req.file, scope: 'vehicles', id })),
       created_by: req.user.id,
     },
     select: { id: true },
@@ -179,8 +181,10 @@ async function updateVehicle(req, res) {
   // Image : mise à jour UNIQUEMENT si un fichier est fourni (ne jamais
   // écraser l'image existante avec NULL).
   if (req.file) {
-    data.image_data = req.file.buffer
-    data.image_mime_type = req.file.mimetype
+    Object.assign(
+      data,
+      await buildImageFields({ file: req.file, scope: 'vehicles', id: existing.id }),
+    )
   }
 
   if (Object.keys(data).length > 0) {

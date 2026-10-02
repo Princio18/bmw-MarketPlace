@@ -223,23 +223,15 @@ async function otpEmailVerify(req, res) {
     return res.status(401).json({ error: 'Jeton 2FA invalide ou expiré.' })
   }
 
-  const devBypass =
-    process.env.TWOFA_DEV_BYPASS === 'true' && /^\d{6}$/.test(code)
-  let row = null
-  let valid = false
-  if (devBypass) {
-    console.warn(
-      '[otp] DEV BYPASS : code accepté sans vérif (env TWOFA_DEV_BYPASS=true)',
-    )
-    valid = true
-  } else {
-    row = await prisma.admin_email_otps.findFirst({
-      where: { user_id: user.id, expires_at: { gt: new Date() } },
-      orderBy: { created_at: 'desc' },
-      select: { id: true, code_hash: true },
-    })
-    valid = row ? await bcrypt.compare(String(code), row.code_hash) : false
-  }
+  // Le code n'est accepté que s'il correspond au hash stocké en base. Aucun
+  // contournement n'existe : un code à 6 chiffres quelconque ne doit JAMAIS
+  // ouvrir la session admin, quelle que soit la configuration.
+  const row = await prisma.admin_email_otps.findFirst({
+    where: { user_id: user.id, expires_at: { gt: new Date() } },
+    orderBy: { created_at: 'desc' },
+    select: { id: true, code_hash: true },
+  })
+  const valid = row ? await bcrypt.compare(String(code), row.code_hash) : false
   if (!valid) {
     return res.status(400).json({ error: 'Invalid or expired code.' })
   }

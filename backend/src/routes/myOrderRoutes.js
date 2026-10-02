@@ -14,7 +14,7 @@ async function getMyOrders(req, res) {
        v.model_name AS "modelName",
        v.variant_label AS "variantLabel",
        o.vehicle_id AS "vehicleId",
-       '/api/vehicles/' || o.vehicle_id || '/image' AS "image",
+       '/api/vehicles/' || o.vehicle_id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image",
        EXISTS(
          SELECT 1 FROM reviews r
           WHERE r.order_id = o.id AND r.deleted_at IS NULL

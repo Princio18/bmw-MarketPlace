@@ -1,5 +1,5 @@
 const { prisma, pgSafe } = require('../db')
-const { toBuffer } = require('../utils/bytes')
+const { resolveImage } = require('../utils/imageResolver')
 
 async function getVehicles(req, res) {
   try {
@@ -51,7 +51,7 @@ async function getVehicles(req, res) {
          drivetrain,
          is_m_performance AS "isMPerformance",
          base_price::float8 AS "basePrice",
-         '/api/vehicles/' || id || '/image' AS "image",
+         '/api/vehicles/' || id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM image_updated_at) * 1000)::bigint, 0) AS "image",
          (SELECT ROUND(AVG(rating::numeric), 1)
             FROM reviews r
            WHERE r.vehicle_id = vehicles.id
@@ -102,7 +102,7 @@ async function getVehicleById(req, res) {
          is_m_performance AS "isMPerformance",
          base_price::float8 AS "basePrice",
          specs,
-         '/api/vehicles/' || id || '/image' AS "image",
+         '/api/vehicles/' || id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM image_updated_at) * 1000)::bigint, 0) AS "image",
          (SELECT ROUND(AVG(rating::numeric), 1)
             FROM reviews r
            WHERE r.vehicle_id = vehicles.id
@@ -129,18 +129,28 @@ async function getVehicleImage(req, res) {
   try {
     const vehicle = await prisma.vehicles.findFirst({
       where: { id: req.params.id },
-      select: { image_data: true, image_mime_type: true },
+      select: {
+        image_key: true,
+        image_data: true,
+        image_mime_type: true,
+      },
     })
-    if (!vehicle || !vehicle.image_data) {
+    if (!vehicle || (!vehicle.image_key && !vehicle.image_data)) {
       return res.redirect('/images/placeholder-vehicle.svg')
     }
-    const buffer = toBuffer(vehicle.image_data)
-    if (!buffer) {
+    const image = await resolveImage({
+      imageKey: vehicle.image_key,
+      imageData: vehicle.image_data,
+      imageMimeType: vehicle.image_mime_type,
+      scope: 'vehicles',
+      id: req.params.id,
+    })
+    if (!image) {
       return res.redirect('/images/placeholder-vehicle.svg')
     }
-    res.set('Content-Type', vehicle.image_mime_type)
+    res.set('Content-Type', image.contentType)
     res.set('Cache-Control', 'public, max-age=86400')
-    res.send(buffer)
+    res.send(image.buffer)
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles/:id/image :', err)
     res.status(500).json({ error: 'Unable to load vehicle image.' })

@@ -45,6 +45,9 @@ app.get('/api/health', (req, res) => {
     config: {
       smtp: has('SMTP_HOST') && has('SMTP_PORT'),
       twoFactor: isTwoFactorConfigured(),
+      // Conservé comme SONDE de sécurité : la variable ne pilote plus aucun
+      // comportement, le contournement OTP a été supprimé du code. Si elle
+      // vaut encore 'true' quelque part, c'est un vestige à nettoyer.
       devBypassEnabled: process.env.TWOFA_DEV_BYPASS === 'true',
       devActivationLinkExposed: process.env.ACTIVATION_DEV_MODE !== 'false',
       frontendUrl: has('FRONTEND_URL'),

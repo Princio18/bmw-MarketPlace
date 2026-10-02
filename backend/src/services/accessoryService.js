@@ -21,18 +21,27 @@ const ACCESSORY_SELECT = `
     a.badge,
     a.requires_adjustment AS "requiresAdjustment",
     a.stock_quantity::int AS "stockQuantity",
-    a.image_data IS NOT NULL AS "hasImage",
-    '/api/accessories/' || a.id || '/image' AS "image",
+    -- image_data sert encore de repli, mais l'image peut désormais vivre dans
+    -- le bucket : ne considérer l'accessoire "sans image" que si les DEUX
+    -- sources sont vides, sinon l'admin afficherait un placeholder à tort.
+    (a.image_data IS NOT NULL OR a.image_key IS NOT NULL) AS "hasImage",
+    -- Version d'image ajoutée en query string : sans elle, remplacer une image
+    -- ne changerait pas l'URL et le navigateur servirait l'ancienne pendant
+    -- toute la durée du max-age (24 h). COALESCE car toutes les lignes
+    -- existantes ont image_updated_at NULL, et NULL concaténé donnerait une
+    -- URL littéralement nulle. Reste un chemin relatif.
+    '/api/accessories/' || a.id || '/image?v='
+      || COALESCE((EXTRACT(EPOCH FROM a.image_updated_at) * 1000)::bigint, 0) AS "image",
     (a.stock_quantity > 0) AS "inStock",
     a.created_at AS "createdAt",
     a.deleted_at AS "deletedAt"
   FROM accessories a
 `
 
-// SELECT public : jamais de BYTEA dans la liste (poids useless de la requête),
-// l'image est exposée via son URL.
+// SELECT public : jamais de BYTEA ni de clé d'objet dans la liste (poids inutile
+// de la requête), l'image est exposée via son URL.
 const ACCESSORY_LIST_SELECT = ACCESSORY_SELECT.replace(
-  'a.image_data IS NOT NULL AS "hasImage",\n    ',
+  '(a.image_data IS NOT NULL OR a.image_key IS NOT NULL) AS "hasImage",\n    ',
   '',
 )
 
@@ -82,7 +91,9 @@ async function findAccessoryById(id) {
 
 async function findAccessoryImage(id) {
   const rows = await prisma.$queryRawUnsafe(
-    `SELECT image_data AS "imageData", image_mime_type AS "imageMimeType"
+    `SELECT image_key AS "imageKey",
+            image_data AS "imageData",
+            image_mime_type AS "imageMimeType"
      FROM accessories
      WHERE id = $1 AND deleted_at IS NULL`,
     id,
@@ -92,7 +103,11 @@ async function findAccessoryImage(id) {
   // convertirait en { type: 'Buffer', data: [...] } et res.send enverrait du
   // JSON au lieu de l'image. Même raison que getVehicleImage côté véhicules.
   const row = rows[0]
-  return { imageData: row.imageData, imageMimeType: row.imageMimeType }
+  return {
+    imageKey: row.imageKey,
+    imageData: row.imageData,
+    imageMimeType: row.imageMimeType,
+  }
 }
 
 // Recharge les accessoires DEPUIS LA BASE à partir des ids sélectionnés dans

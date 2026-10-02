@@ -5,6 +5,7 @@ const { checkPermission } = require('../middleware/checkPermission')
 const upload = require('../middleware/upload')
 const { ROLES } = require('../roles')
 const accessoryService = require('../services/accessoryService')
+const { buildImageFields } = require('../utils/imagePersistence')
 
 function toBool(value) {
   return value === true || value === 'true' || value === '1'
@@ -97,16 +98,19 @@ async function createAccessory(req, res) {
     return res.status(400).json({ error: stock.error })
   }
 
+  const id = require('crypto').randomUUID()
+  const imageFields = await buildImageFields({ file: req.file, scope: 'accessories', id })
+
   const created = await prisma.accessories.create({
     data: {
+      id,
       name: String(body.name).trim(),
       description: body.description ? String(body.description).trim() : null,
       price,
       badge: body.badge ? String(body.badge).trim() : null,
       requires_adjustment: toBool(body.requiresAdjustment),
       stock_quantity: stock.value,
-      image_data: req.file ? req.file.buffer : null,
-      image_mime_type: req.file ? req.file.mimetype : null,
+      ...imageFields,
     },
     select: { id: true },
   })
@@ -140,8 +144,14 @@ async function updateAccessory(req, res) {
   // Image : mise à jour UNIQUEMENT si un fichier est fourni (ne jamais
   // écraser l'image existante avec NULL).
   if (req.file) {
-    data.image_data = req.file.buffer
-    data.image_mime_type = req.file.mimetype
+    Object.assign(
+      data,
+      await buildImageFields({
+        file: req.file,
+        scope: 'accessories',
+        id: existing.id,
+      }),
+    )
   }
 
   if (Object.keys(data).length > 0) {

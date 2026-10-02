@@ -52,7 +52,7 @@ async function getClient(req, res) {
               v.id AS "vehicleId", v.model_name AS "modelName",
               v.variant_label AS "variantLabel", v.base_price::float8 AS "basePrice",
               v.specs,
-              '/api/vehicles/' || v.id || '/image' AS "image"
+              '/api/vehicles/' || v.id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image"
          FROM carts c
          JOIN vehicles v ON v.id = c.vehicle_id
         WHERE c.user_id = $1 AND c.is_validated = false AND c.deleted_at IS NULL
@@ -62,7 +62,7 @@ async function getClient(req, res) {
     prisma.$queryRawUnsafe(
       `SELECT v.id, v.model_name AS "modelName", v.variant_label AS "variantLabel",
               v.base_price::float8 AS "basePrice",
-              '/api/vehicles/' || v.id || '/image' AS "image"
+              '/api/vehicles/' || v.id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image"
          FROM favorites f
          JOIN vehicles v ON v.id = f.vehicle_id AND v.deleted_at IS NULL
         WHERE f.user_id = $1`,
