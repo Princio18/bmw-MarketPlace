@@ -1,4 +1,5 @@
 const accessoryService = require('../services/accessoryService')
+const { toBuffer } = require('../utils/bytes')
 
 // Liste publique des accessoires actifs. Le champ `image` pointe vers
 // /api/accessories/:id/image et `inStock` est calculé côté SQL.
@@ -19,9 +20,13 @@ async function getAccessoryImage(req, res) {
     if (!accessory || !accessory.imageData) {
       return res.redirect('/images/placeholder-accessory.svg')
     }
+    const buffer = toBuffer(accessory.imageData)
+    if (!buffer) {
+      return res.redirect('/images/placeholder-accessory.svg')
+    }
     res.set('Content-Type', accessory.imageMimeType)
     res.set('Cache-Control', 'public, max-age=86400')
-    return res.send(accessory.imageData)
+    return res.send(buffer)
   } catch (err) {
     console.error('[accessories] erreur GET /api/accessories/:id/image :', err)
     return res.status(500).json({ error: 'Unable to load accessory image.' })

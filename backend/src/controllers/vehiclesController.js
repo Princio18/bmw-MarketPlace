@@ -1,4 +1,5 @@
 const { prisma, pgSafe } = require('../db')
+const { toBuffer } = require('../utils/bytes')
 
 async function getVehicles(req, res) {
   try {
@@ -133,9 +134,13 @@ async function getVehicleImage(req, res) {
     if (!vehicle || !vehicle.image_data) {
       return res.redirect('/images/placeholder-vehicle.svg')
     }
+    const buffer = toBuffer(vehicle.image_data)
+    if (!buffer) {
+      return res.redirect('/images/placeholder-vehicle.svg')
+    }
     res.set('Content-Type', vehicle.image_mime_type)
     res.set('Cache-Control', 'public, max-age=86400')
-    res.send(vehicle.image_data)
+    res.send(buffer)
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles/:id/image :', err)
     res.status(500).json({ error: 'Unable to load vehicle image.' })
