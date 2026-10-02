@@ -17,6 +17,14 @@ function requireTwoFactorSecret() {
   }
 }
 
+// Une variable manquante est un défaut de configuration, pas une invitation à
+// laisser passer : les 2 routes de vérification doivent donc REFUSER le jeton
+// (401), jamais lever. Lever ici transformait une erreur de config en 500 et
+// masquait la cause réelle derrière un message générique.
+function isTwoFactorConfigured() {
+  return Boolean(JWT_2FA_SECRET)
+}
+
 function signAccessToken(user) {
   requireJwtSecret()
   return jwt.sign(
@@ -34,7 +42,7 @@ function signTwoFactorToken(userId, purpose, extra = {}) {
 }
 
 function verifyTwoFactorToken(token) {
-  requireTwoFactorSecret()
+  if (!JWT_2FA_SECRET) return null
   try {
     return jwt.verify(token, JWT_2FA_SECRET)
   } catch {
@@ -43,7 +51,7 @@ function verifyTwoFactorToken(token) {
 }
 
 function verifyToken(token) {
-  requireJwtSecret()
+  if (!JWT_SECRET) return null
   try {
     return jwt.verify(token, JWT_SECRET)
   } catch {
@@ -57,4 +65,5 @@ module.exports = {
   verifyTwoFactorToken,
   verifyToken,
   requireJwtSecret,
+  isTwoFactorConfigured,
 }

@@ -61,6 +61,8 @@ model vehicles {
   drivetrain       String   @default("petrol") @db.VarChar(20)
   image_data       Bytes?
   image_mime_type  String?  @db.VarChar(50)
+  image_key        String?
+  image_updated_at DateTime? @db.Timestamptz(6)
   specs            Json?
   created_by       String?  @db.Uuid
   created_at       DateTime @default(now()) @db.Timestamp(6)
@@ -81,6 +83,8 @@ model accessories {
   price               Decimal   @db.Decimal(10, 2)
   image_data          Bytes?
   image_mime_type     String?   @db.VarChar(50)
+  image_key           String?
+  image_updated_at    DateTime? @db.Timestamptz(6)
   stock_quantity      Int       @default(0)
   badge               String?   @db.VarChar(50)
   requires_adjustment Boolean   @default(false)

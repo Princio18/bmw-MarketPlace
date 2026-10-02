@@ -1,7 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
-const { requireJwtSecret } = require('./auth/tokens')
+const { requireJwtSecret, isTwoFactorConfigured } = require('./auth/tokens')
 const authRoutes = require('./routes/auth')
 const usersRoutes = require('./routes/users')
 const adminRoutes = require('./routes/admin')
@@ -34,8 +34,23 @@ app.use('/api/payments/webhook', paymentWebhookRoutes)
 
 app.use(express.json())
 
+// Diagnostic de configuration : ne renvoie QUE la présence des variables, pas
+// leurs valeurs. Sans cela, un secret manquant se manifeste par un 500 opaque
+// bien plus tard (au moment du login admin) au lieu d'être visible ici.
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'BMW AutoSell API is running' })
+  const has = (key) => Boolean(process.env[key])
+  res.json({
+    status: 'OK',
+    message: 'BMW AutoSell API is running',
+    config: {
+      smtp: has('SMTP_HOST') && has('SMTP_PORT'),
+      twoFactor: isTwoFactorConfigured(),
+      devBypassEnabled: process.env.TWOFA_DEV_BYPASS === 'true',
+      devActivationLinkExposed: process.env.ACTIVATION_DEV_MODE !== 'false',
+      frontendUrl: has('FRONTEND_URL'),
+      objectStorage: has('AWS_ENDPOINT_URL_S3') && has('S3_BUCKET_NAME'),
+    },
+  })
 })
 
 app.use('/api/auth', authRoutes)
