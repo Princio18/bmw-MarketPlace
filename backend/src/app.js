@@ -44,6 +44,11 @@ app.get('/api/health', (req, res) => {
     message: 'BMW AutoSell API is running',
     config: {
       smtp: has('SMTP_HOST') && has('SMTP_PORT'),
+      // `smtp` ci-dessus ne vaut que serveur+port. Un transporteur sans
+      // identifiants passe pour configuré alors que Nodemailer échouera à
+      // chaque envoi, et l'API répond quand même sent:true. Ce second indicateur
+      // ferme l'angle mort.
+      smtpAuth: has('SMTP_USER') && has('SMTP_PASS'),
       twoFactor: isTwoFactorConfigured(),
       // Conservé comme SONDE de sécurité : la variable ne pilote plus aucun
       // comportement, le contournement OTP a été supprimé du code. Si elle
