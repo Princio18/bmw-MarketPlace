@@ -3,7 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, RotateCw } from 'lucide-react'
 import { TABS_HEIGHT, NAVBAR_HEIGHT } from './layout'
 
-function StepTabs({ tabs, activeTab, activeIndex, onSelect, onOpen360 }) {
+function StepTabs({
+  tabs,
+  activeTab,
+  activeIndex,
+  onSelect,
+  onOpen360,
+  has3dExterior = true,
+}) {
   const { t } = useTranslation()
   const trackRef = useRef(null)
   const tabRefs = useRef({})
@@ -35,7 +42,12 @@ function StepTabs({ tabs, activeTab, activeIndex, onSelect, onOpen360 }) {
       <div className="mx-auto flex h-full w-full max-w-[1800px] items-center gap-4 px-6">
         <button
           type="button"
-          title={t('configure.steps.view360')}
+          // Le bouton reste TOUJOURS actif : sans modèle, le viewer affiche
+          // l'écran « non disponible » existant. L'info-bulle annonce
+          // simplement l'absence de modèle au lieu de laisser deviner l'erreur.
+          title={has3dExterior
+            ? t('configure.steps.view360')
+            : t('configure.view360.comingSoon')}
           aria-label={t('configure.steps.view360')}
           onClick={onOpen360}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-400 hover:text-gray-900"

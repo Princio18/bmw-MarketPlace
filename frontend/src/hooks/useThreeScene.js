@@ -4,8 +4,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 
-const EXTERIOR_URL = '/models/vehicle-exterior.glb'
-const INTERIOR_URL = '/models/vehicle-interior.glb'
 const ENVIRONMENT_URL = '/environments/studio.hdr'
 
 const PAINT_PATTERN = /body|paint|carpaint|exterior/i
@@ -115,8 +113,18 @@ function frameModel(model, camera, controls, { interior }) {
  * remontent le composant en développement : chaque ressource est donc libérée
  * de façon idempotente, y compris le contexte WebGL via `forceContextLoss`,
  * sinon le navigateur finit par tuer le contexte après quelques ouvertures.
+ *
+ * Les URLs des modèles glTF sont fournies par le véhicule (assignation par
+ * véhicule) et non plus par des constantes : elles peuvent donc changer ou
+ * être absentes. `null`/`undefined` ne doit JAMAIS atteindre `GLTFLoader`.
  */
-export function useThreeScene({ mode = 'out', bodyColor = null, active = true }) {
+export function useThreeScene({
+  mode = 'out',
+  bodyColor = null,
+  active = true,
+  exteriorModelUrl = null,
+  interiorModelUrl = null,
+}) {
   const containerRef = useRef(null)
   const [exteriorStatus, setExteriorStatus] = useState('idle')
   const [interiorStatus, setInteriorStatus] = useState('idle')
@@ -282,6 +290,28 @@ export function useThreeScene({ mode = 'out', bodyColor = null, active = true })
     }
   }, [active])
 
+  // 1bis. Invalidation du cache de modèles quand les URLs changent.
+  //
+  // `modelsRef` est indexé par mode (`out`/`in`) et non par URL : sans cette
+  // remise à zéro, un véhicule qui change de modèle réutiliserait celui du
+  // précédent. On détache avant de libérer, sinon un rendu pourrait porter une
+  // géométrie déjà disposée. L'objet lui-même est muté (et non remplacé) car
+  // l'effet de scène en conserve une référence locale pour son nettoyage.
+  useEffect(() => {
+    const models = modelsRef.current
+    if (!models.out && !models.in) return undefined
+
+    const ctx = sceneRef.current
+    if (ctx) ctx.attach(null)
+
+    for (const key of ['out', 'in']) {
+      if (!models[key]) continue
+      disposeObject(models[key].object)
+      models[key] = null
+    }
+    return undefined
+  }, [exteriorModelUrl, interiorModelUrl])
+
   // 2. Modèle du mode courant. Les modèles déjà chargés sont conservés en
   //    cache et simplement réattachés : revenir de l'intérieur à l'extérieur
   //    ne re-télécharge rien.
@@ -293,6 +323,16 @@ export function useThreeScene({ mode = 'out', bodyColor = null, active = true })
 
     const interior = mode === 'in'
     const setStatus = interior ? setInteriorStatus : setExteriorStatus
+
+    // Contrainte : ne jamais appeler GLTFLoader avec une URL nulle. Un
+    // véhicule sans modèle passe en `error`, ce qui déclenche l'écran
+    // existant « modèle non disponible » — exactement le comportement d'un
+    // fichier introuvable, donc aucune régression.
+    const url = interior ? interiorModelUrl : exteriorModelUrl
+    if (!url) {
+      setStatus('error')
+      return undefined
+    }
 
     const cached = modelsRef.current[mode]
     if (cached) {
@@ -311,7 +351,7 @@ export function useThreeScene({ mode = 'out', bodyColor = null, active = true })
     tokenRef.current = token
 
     loader.load(
-      interior ? INTERIOR_URL : EXTERIOR_URL,
+      url,
       (gltf) => {
         if (tokenRef.current !== token) {
           disposeObject(gltf.scene)
@@ -333,12 +373,12 @@ export function useThreeScene({ mode = 'out', bodyColor = null, active = true })
     )
 
     // Invalidation : un chargement en cours ne doit plus être pris en compte
-    // après un changement de mode ou un démontage. three.js n'expose pas
-    // d'annulation, le jeton suffit à ignorer la réponse tardive.
+    // après un changement de mode, de modèle ou un démontage. three.js
+    // n'expose pas d'annulation, le jeton suffit à ignorer la réponse tardive.
     return () => {
       tokenRef.current += 1
     }
-  }, [mode, active])
+  }, [mode, active, exteriorModelUrl, interiorModelUrl])
 
   // 3. Changement de peinture, sans recharger le modèle.
   useEffect(() => {
@@ -350,9 +390,12 @@ export function useThreeScene({ mode = 'out', bodyColor = null, active = true })
     containerRef,
     exteriorStatus,
     interiorStatus,
-    interiorAvailable: interiorStatus !== 'error',
+    // Sans URL intérieure, l'intérieur est indisponible DÈS LE DÉPART et non
+    // après un chargement voué à l'échec : le bouton « Intérieur » bascule
+    // immédiatement sur le message d'indisponibilité.
+    interiorAvailable: Boolean(interiorModelUrl) && interiorStatus !== 'error',
     exteriorFailed: exteriorStatus === 'error',
   }
 }
 
-export { applyBodyColor, EXTERIOR_URL, INTERIOR_URL }
+export { applyBodyColor }

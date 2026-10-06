@@ -5,9 +5,15 @@ const { checkPermission } = require('../middleware/checkPermission')
 const upload = require('../middleware/upload')
 const { ROLES } = require('../roles')
 const { buildImageFields } = require('../utils/imagePersistence')
+const accessoryService = require('../services/accessoryService')
 
 const DRIVETRAINS = ['electric', 'hybrid', 'petrol', 'diesel', 'concept', 'protection']
 const DEFAULT_VARIANT = 'Models'
+// Nom de fichier simple, sans chemin : le préfixe `/models/exteriors/` ou
+// `/models/interiors/` est ajouté côté serveur, jamais l'inverse.
+const MODEL_FILENAME = /^[A-Za-z0-9._-]+\.glb$/
+const MODEL_FILENAME_MAX = 255
+const MODEL_FILENAMES = ['model3dExteriorFilename', 'model3dInteriorFilename']
 
 const VEHICLE_SELECT = `
   SELECT
@@ -21,6 +27,15 @@ const VEHICLE_SELECT = `
     v.is_m_performance AS "isMPerformance",
     v.base_price::float8 AS "basePrice",
     '/api/vehicles/' || v.id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image",
+    NULLIF(v.model3d_exterior_filename, '') IS NOT NULL AS "has3dExterior",
+    CASE WHEN NULLIF(v.model3d_exterior_filename, '') IS NOT NULL
+         THEN '/models/exteriors/' || v.model3d_exterior_filename END AS "exteriorModelUrl",
+    NULLIF(v.model3d_interior_filename, '') IS NOT NULL AS "has3dInterior",
+    CASE WHEN NULLIF(v.model3d_interior_filename, '') IS NOT NULL
+         THEN '/models/interiors/' || v.model3d_interior_filename END AS "interiorModelUrl",
+    v.model3d_exterior_filename AS "model3dExteriorFilename",
+    v.model3d_interior_filename AS "model3dInteriorFilename",
+    ARRAY(SELECT va.accessory_id FROM vehicle_accessories va WHERE va.vehicle_id = v.id) AS "accessoryIds",
     (SELECT COUNT(*) FROM favorites f WHERE f.vehicle_id = v.id)::int AS "favoritesCount",
     (SELECT COUNT(*) FROM carts c
        WHERE c.vehicle_id = v.id AND c.is_validated = false AND c.deleted_at IS NULL)::int
@@ -39,6 +54,20 @@ function toBool(value) {
   return value === true || value === 'true' || value === '1'
 }
 
+// Un champ de nom de fichier est optionnel. Trois états distincts, tous
+// conservés tels quels pour `buildData` :
+//   undefined -> non fourni, la colonne n'est pas touchée (PUT partiel) ;
+//   ''        -> l'admin veut VIDER le champ, on stocke NULL ;
+//   'ix.glb'  -> valeur normalisée.
+// Sans cette normalisation, `''` deviendrait une URL non NULL
+// (`'/models/exteriors/' || ''`) et activerait le bouton 360 vers rien.
+function toOptionalFilename(value) {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  const trimmed = String(value).trim()
+  return trimmed === '' ? null : trimmed
+}
+
 function coerceBody(body) {
   const source = body || {}
   return {
@@ -50,6 +79,8 @@ function coerceBody(body) {
     isNew: toBool(source.isNew),
     isMPerformance: toBool(source.isMPerformance),
     basePrice: source.basePrice,
+    model3dExteriorFilename: toOptionalFilename(source.model3dExteriorFilename),
+    model3dInteriorFilename: toOptionalFilename(source.model3dInteriorFilename),
   }
 }
 
@@ -96,6 +127,29 @@ function validateVehicleFields(body, { partial = false } = {}) {
   const price = parseBasePrice(basePrice)
   if (price.error) errors.push(price.error)
 
+  // Champs optionnels : `undefined` (non fourni) et `null` (volonté
+  // d'effacer) sont tous deux légitimes, seule une valeur fournie est
+  // validée. Le motif exclut `/` et `..` : l'URL publique est construite par
+  // le serveur en préfixant le nom, une traversée de chemin serait donc
+  // servie telle quelle.
+  for (const field of MODEL_FILENAMES) {
+    const value = (body || {})[field]
+    if (value === undefined || value === null) continue
+    if (typeof value !== 'string') {
+      errors.push(`${field} doit être un nom de fichier.`)
+      continue
+    }
+    if (value.length > MODEL_FILENAME_MAX) {
+      errors.push(`${field} : ${MODEL_FILENAME_MAX} caractères maximum.`)
+      continue
+    }
+    if (!MODEL_FILENAME.test(value)) {
+      errors.push(
+        `${field} doit être un nom de fichier .glb (ex. : ix.glb), sans chemin.`,
+      )
+    }
+  }
+
   return { errors, price }
 }
 
@@ -111,6 +165,8 @@ function buildData(body) {
     isNew: 'is_new',
     isMPerformance: 'is_m_performance',
     basePrice: 'base_price',
+    model3dExteriorFilename: 'model3d_exterior_filename',
+    model3dInteriorFilename: 'model3d_interior_filename',
   }
 
   for (const [key, field] of Object.entries(fieldMap)) {
@@ -153,6 +209,8 @@ async function createVehicle(req, res) {
       is_new: isNew,
       is_m_performance: isMPerformance,
       base_price: price.value,
+      model3d_exterior_filename: body.model3dExteriorFilename ?? null,
+      model3d_interior_filename: body.model3dInteriorFilename ?? null,
       ...(await buildImageFields({ file: req.file, scope: 'vehicles', id })),
       created_by: req.user.id,
     },
@@ -215,6 +273,33 @@ async function deleteVehicle(req, res) {
   return res.json({ ok: true })
 }
 
+// Remplace la liste des accessoires rattachés au véhicule. L'admin envoie la
+// sélection complète (`accessoryIds`), le serveur remplace l'ensemble.
+async function updateVehicleAccessories(req, res) {
+  const existing = await findVehicleById(req.params.id)
+  if (!existing) {
+    return res.status(404).json({ error: 'Véhicule introuvable.' })
+  }
+
+  const accessoryIds = req.body?.accessoryIds
+  if (!Array.isArray(accessoryIds)) {
+    return res.status(400).json({ error: 'accessoryIds doit être un tableau.' })
+  }
+
+  const { invalid, unknown } = await accessoryService.setVehicleAccessories(
+    existing.id,
+    accessoryIds,
+  )
+  if (invalid.length > 0 || unknown.length > 0) {
+    return res
+      .status(400)
+      .json({ error: 'Un ou plusieurs accessoires sont invalides ou introuvables.' })
+  }
+
+  const vehicle = await findVehicleById(existing.id)
+  return res.json(vehicle)
+}
+
 async function restoreVehicle(req, res) {
   const result = await prisma.vehicles.updateMany({
     where: { id: req.params.id, deleted_at: { not: null } },
@@ -236,6 +321,7 @@ router.get('/', listVehicles)
 router.post('/', checkPermission('can_manage_vehicles'), upload.single('image'), createVehicle)
 router.get('/:id', getVehicle)
 router.put('/:id/restore', checkPermission('can_manage_vehicles'), restoreVehicle)
+router.put('/:id/accessories', checkPermission('can_manage_vehicles'), updateVehicleAccessories)
 router.put('/:id', checkPermission('can_manage_vehicles'), upload.single('image'), updateVehicle)
 router.delete('/:id', checkPermission('can_manage_vehicles'), deleteVehicle)
 

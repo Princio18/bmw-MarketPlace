@@ -75,6 +75,19 @@ async function createCheckoutSession(req, res) {
       .json({ error: 'One of your selected accessories is no longer available.' })
   }
 
+  // Les accessoires ne sont valides que sur les véhicules auxquels ils sont
+  // rattachés (table vehicle_accessories) : un id existant mais non proposé sur
+  // ce véhicule (panier bricolé) est refusé.
+  const unassigned = await accessoryService.findUnassignedAccessoryIds(
+    cart.vehicleId,
+    accessoryIds,
+  )
+  if (unassigned.length > 0) {
+    return res
+      .status(400)
+      .json({ error: 'One of your selected accessories is not available for this vehicle.' })
+  }
+
   const lines = [
     vehicleLine(cart),
     ...items.map((item) => ({ label: item.name, amount: Number(item.price) })),

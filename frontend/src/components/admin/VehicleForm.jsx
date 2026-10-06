@@ -34,7 +34,10 @@ function emptyValues() {
     isNew: false,
     isMPerformance: false,
     basePrice: '',
+    model3dExteriorFilename: '',
+    model3dInteriorFilename: '',
     imageFile: null,
+    accessoryIds: [],
   }
 }
 
@@ -50,8 +53,12 @@ function VehicleForm({ vehicle, onSuccess }) {
     isNew: Boolean(vehicle?.isNew),
     isMPerformance: Boolean(vehicle?.isMPerformance),
     basePrice: vehicle?.basePrice ?? '',
+    model3dExteriorFilename: vehicle?.model3dExteriorFilename || '',
+    model3dInteriorFilename: vehicle?.model3dInteriorFilename || '',
     imageFile: null,
+    accessoryIds: Array.isArray(vehicle?.accessoryIds) ? vehicle.accessoryIds : [],
   })
+  const [allAccessories, setAllAccessories] = useState([])
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState('')
@@ -67,6 +74,27 @@ function VehicleForm({ vehicle, onSuccess }) {
     }
   }, [])
 
+  // Catalogue complet (y compris hors stock) pour cocher les accessoires
+  // rattachés à ce véhicule. Les accessoires supprimés sont écartés.
+  useEffect(() => {
+    let cancelled = false
+    api
+      .get('/admin/accessories', {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      })
+      .then(({ data }) => {
+        if (cancelled) return
+        const list = Array.isArray(data?.accessories) ? data.accessories : []
+        setAllAccessories(list.filter((a) => !a.deletedAt))
+      })
+      .catch(() => {
+        if (!cancelled) setAllAccessories([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setValues((prev) => ({ ...prev, [name]: value }))
@@ -75,6 +103,18 @@ function VehicleForm({ vehicle, onSuccess }) {
   const handleCheckbox = (e) => {
     const { name, checked } = e.target
     setValues((prev) => ({ ...prev, [name]: checked }))
+  }
+
+  const handleAccessoryToggle = (id) => {
+    setValues((prev) => {
+      const current = Array.isArray(prev.accessoryIds) ? prev.accessoryIds : []
+      return {
+        ...prev,
+        accessoryIds: current.includes(id)
+          ? current.filter((x) => x !== id)
+          : [...current, id],
+      }
+    })
   }
 
   const handleFileChange = (e) => {
@@ -114,6 +154,11 @@ function VehicleForm({ vehicle, onSuccess }) {
     if (parsedPrice !== null) {
       payload.append('basePrice', String(parsedPrice))
     }
+    // Toujours envoyés : une chaîne vide est normalisée en NULL côté serveur et
+    // sert à RETIRER un modèle déjà rattaché (sinon le champ ne serait jamais
+    // effaçable via un PUT partiel).
+    payload.append('model3dExteriorFilename', values.model3dExteriorFilename.trim())
+    payload.append('model3dInteriorFilename', values.model3dInteriorFilename.trim())
     if (values.imageFile) {
       payload.append('image', values.imageFile)
     }
@@ -130,6 +175,16 @@ function VehicleForm({ vehicle, onSuccess }) {
       const { data } = await api[method](url, payload, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       })
+      // Le véhicule existe maintenant : on remplace la liste des accessoires
+      // rattachés (l'id vient de la réponse à la création).
+      const targetId = isEdit ? vehicle.id : data?.id
+      if (targetId) {
+        await api.put(
+          `/admin/vehicles/${targetId}/accessories`,
+          { accessoryIds: values.accessoryIds },
+          { headers: { Authorization: `Bearer ${getAuthToken()}` } },
+        )
+      }
       onSuccess?.(data)
       if (!isEdit) {
         setValues(emptyValues())
@@ -326,6 +381,81 @@ function VehicleForm({ vehicle, onSuccess }) {
             : t('vehicleForm.imagePlaceholder')}
         </p>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label
+            htmlFor="vehicleModel3dExterior"
+            className="text-sm font-medium text-gray-800"
+          >
+            {t('vehicleForm.model3dExterior')}
+          </label>
+          <Input
+            id="vehicleModel3dExterior"
+            name="model3dExteriorFilename"
+            type="text"
+            autoComplete="off"
+            placeholder={t('vehicleForm.model3dHint')}
+            value={values.model3dExteriorFilename}
+            onChange={handleChange}
+            className="mt-2 h-11 px-4"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="vehicleModel3dInterior"
+            className="text-sm font-medium text-gray-800"
+          >
+            {t('vehicleForm.model3dInterior')}
+          </label>
+          <Input
+            id="vehicleModel3dInterior"
+            name="model3dInteriorFilename"
+            type="text"
+            autoComplete="off"
+            placeholder={t('vehicleForm.model3dHint')}
+            value={values.model3dInteriorFilename}
+            onChange={handleChange}
+            className="mt-2 h-11 px-4"
+          />
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        {t('vehicleForm.model3dHelp')}
+      </p>
+
+      <fieldset>
+        <legend className="text-sm font-medium text-gray-800">
+          {t('vehicleForm.accessories')}
+        </legend>
+        {allAccessories.length === 0 ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t('vehicleForm.accessoriesEmpty')}
+          </p>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {allAccessories.map((accessory) => (
+              <label
+                key={accessory.id}
+                className="flex items-center gap-2 text-sm text-gray-800"
+              >
+                <input
+                  type="checkbox"
+                  checked={values.accessoryIds.includes(accessory.id)}
+                  onChange={() => handleAccessoryToggle(accessory.id)}
+                  className="h-4 w-4 accent-blue-600"
+                />
+                {accessory.name}
+              </label>
+            ))}
+          </div>
+        )}
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {t('vehicleForm.accessoriesHint')}
+        </p>
+      </fieldset>
 
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
       {success && <p className="text-sm text-emerald-600">{success}</p>}

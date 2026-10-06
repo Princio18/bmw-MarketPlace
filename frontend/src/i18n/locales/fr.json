@@ -354,7 +354,14 @@
     "imageUrl": "Image du véhicule",
     "imagePlaceholder": "PNG, JPG ou WebP — max 5 Mo",
     "currentImage": "Image actuelle",
-    "imageEditHint": "Laissez vide pour conserver l'image actuelle."
+    "imageEditHint": "Laissez vide pour conserver l'image actuelle.",
+    "model3dExterior": "Modèle 3D extérieur (nom du fichier .glb)",
+    "model3dInterior": "Modèle 3D intérieur (nom du fichier .glb)",
+    "model3dHint": "ex. : ix.glb",
+    "model3dHelp": "Déposez le fichier dans public/models/exteriors (extérieur) ou public/models/interiors (intérieur). Laissez vide pour aucun modèle 3D.",
+    "accessories": "Accessoires pour ce véhicule",
+    "accessoriesHint": "Les accessoires cochés apparaissent dans l'onglet « Options » du configurateur, pour ce véhicule uniquement.",
+    "accessoriesEmpty": "Aucun accessoire disponible."
   },
   "myOrders": {
     "title": "Mes commandes",
@@ -465,6 +472,7 @@
     "interiorUnavailable": "Vue intérieure pas encore disponible.",
     "exteriorUnavailable": "Le modèle 3D de ce véhicule n'est pas encore disponible.",
     "closeViewer": "Fermer",
+    "comingSoon": "Vue 3D bientôt disponible pour ce modèle",
     "loading": "Chargement de la vue 360°…"
   },
     "image": {

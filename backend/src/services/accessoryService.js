@@ -69,11 +69,82 @@ function splitIds(ids) {
 }
 
 // Liste publique : uniquement les accessoires actifs.
-async function listActiveAccessories() {
+// Sans `vehicleId` : tout le catalogue (panier, admin, clients).
+// Avec `vehicleId` : uniquement les accessoires rattachés à ce véhicule
+// (onglet « Options » du configurateur).
+async function listActiveAccessories({ vehicleId } = {}) {
+  if (vehicleId) {
+    const rows = await prisma.$queryRawUnsafe(
+      `${ACCESSORY_LIST_SELECT}
+       JOIN vehicle_accessories va ON va.accessory_id = a.id
+       WHERE va.vehicle_id = $1 AND a.deleted_at IS NULL
+       ORDER BY a.created_at ASC`,
+      vehicleId,
+    )
+    return pgSafe(rows)
+  }
   const rows = await prisma.$queryRawUnsafe(
     `${ACCESSORY_LIST_SELECT} WHERE a.deleted_at IS NULL ORDER BY a.created_at ASC`,
   )
   return pgSafe(rows)
+}
+
+// Remplace l'ENSEMBLE des liaisons d'un véhicule (l'admin envoie la liste
+// complète à cocher). Vérifie d'abord que chaque id correspond à un accessoire
+// actif : sans ce filtre, un id inconnu ferait échouer la FK et remonterait une
+// 500 au lieu d'un message clair.
+// Retourne { invalid, unknown } — deux listes vides si tout est bon.
+async function setVehicleAccessories(vehicleId, accessoryIds) {
+  const { valid, invalid } = splitIds(accessoryIds)
+  const unique = [...new Set(valid)]
+
+  let unknown = []
+  if (unique.length > 0) {
+    const found = await prisma.$queryRawUnsafe(
+      `SELECT id FROM accessories WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL`,
+      unique,
+    )
+    const foundIds = new Set(found.map((row) => row.id))
+    unknown = unique.filter((id) => !foundIds.has(id))
+  }
+
+  if (invalid.length > 0 || unknown.length > 0) {
+    return { invalid, unknown }
+  }
+
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe(
+      `DELETE FROM vehicle_accessories WHERE vehicle_id = $1`,
+      vehicleId,
+    ),
+    ...unique.map((accessoryId) =>
+      prisma.$executeRawUnsafe(
+        `INSERT INTO vehicle_accessories (vehicle_id, accessory_id)
+         VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        vehicleId,
+        accessoryId,
+      ),
+    ),
+  ])
+
+  return { invalid: [], unknown: [] }
+}
+
+// Ids d'accessoires NON rattachés au véhicule (parmi ceux demandés). Au
+// checkout : un id non rattaché (manipulation du panier) doit être refusé.
+async function findUnassignedAccessoryIds(vehicleId, ids) {
+  const { valid } = splitIds(ids)
+  const unique = [...new Set(valid)]
+  if (unique.length === 0) return []
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT accessory_id AS "accessoryId"
+       FROM vehicle_accessories
+      WHERE vehicle_id = $1 AND accessory_id = ANY($2::uuid[])`,
+    vehicleId,
+    unique,
+  )
+  const assigned = new Set(rows.map((row) => row.accessoryId))
+  return unique.filter((id) => !assigned.has(id))
 }
 
 // Liste admin : inclut les soft-deleted, avec l'indicateur hasImage.
@@ -162,6 +233,8 @@ async function decrementStock(id) {
 module.exports = {
   isValidAccessoryId,
   listActiveAccessories,
+  setVehicleAccessories,
+  findUnassignedAccessoryIds,
   listAllAccessories,
   findAccessoryById,
   findAccessoryImage,

@@ -64,16 +64,19 @@ model vehicles {
   image_key        String?
   image_updated_at DateTime? @db.Timestamptz(6)
   specs            Json?
+  model3d_exterior_filename String?
+  model3d_interior_filename String?
   created_by       String?  @db.Uuid
   created_at       DateTime @default(now()) @db.Timestamp(6)
   updated_at       DateTime @default(now()) @db.Timestamptz(6)
   deleted_at       DateTime? @db.Timestamptz(6)
 
-  creator   users?     @relation("vehicles_created_by", fields: [created_by], references: [id])
-  carts     carts[]
-  orders    orders[]
-  reviews   reviews[]
-  favorites favorites[]
+  creator             users?               @relation("vehicles_created_by", fields: [created_by], references: [id])
+  carts               carts[]
+  orders              orders[]
+  reviews             reviews[]
+  favorites           favorites[]
+  vehicle_accessories vehicle_accessories[]
 }
 
 model accessories {
@@ -90,6 +93,23 @@ model accessories {
   requires_adjustment Boolean   @default(false)
   created_at          DateTime  @default(now()) @db.Timestamp(6)
   deleted_at          DateTime? @db.Timestamp(6)
+
+  vehicle_accessories vehicle_accessories[]
+}
+
+// Liaison accessoire <-> véhicule : un accessoire n'est proposé que sur les
+// véhicules explicitement associés ici. Table de jointure pure (pas d'id
+// propre) ; la suppression d'un véhicule ou d'un accessoire retire la liaison.
+model vehicle_accessories {
+  vehicle_id   String   @db.Uuid
+  accessory_id String   @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+
+  vehicle   vehicles    @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  accessory accessories @relation(fields: [accessory_id], references: [id], onDelete: Cascade)
+
+  @@id([vehicle_id, accessory_id])
+  @@index([accessory_id])
 }
 
 model carts {

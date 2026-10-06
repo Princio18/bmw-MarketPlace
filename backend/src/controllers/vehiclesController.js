@@ -52,6 +52,12 @@ async function getVehicles(req, res) {
          is_m_performance AS "isMPerformance",
          base_price::float8 AS "basePrice",
          '/api/vehicles/' || id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM image_updated_at) * 1000)::bigint, 0) AS "image",
+         NULLIF(model3d_exterior_filename, '') IS NOT NULL AS "has3dExterior",
+         CASE WHEN NULLIF(model3d_exterior_filename, '') IS NOT NULL
+              THEN '/models/exteriors/' || model3d_exterior_filename END AS "exteriorModelUrl",
+         NULLIF(model3d_interior_filename, '') IS NOT NULL AS "has3dInterior",
+         CASE WHEN NULLIF(model3d_interior_filename, '') IS NOT NULL
+              THEN '/models/interiors/' || model3d_interior_filename END AS "interiorModelUrl",
          (SELECT ROUND(AVG(rating::numeric), 1)
             FROM reviews r
            WHERE r.vehicle_id = vehicles.id
@@ -103,6 +109,12 @@ async function getVehicleById(req, res) {
          base_price::float8 AS "basePrice",
          specs,
          '/api/vehicles/' || id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM image_updated_at) * 1000)::bigint, 0) AS "image",
+         NULLIF(model3d_exterior_filename, '') IS NOT NULL AS "has3dExterior",
+         CASE WHEN NULLIF(model3d_exterior_filename, '') IS NOT NULL
+              THEN '/models/exteriors/' || model3d_exterior_filename END AS "exteriorModelUrl",
+         NULLIF(model3d_interior_filename, '') IS NOT NULL AS "has3dInterior",
+         CASE WHEN NULLIF(model3d_interior_filename, '') IS NOT NULL
+              THEN '/models/interiors/' || model3d_interior_filename END AS "interiorModelUrl",
          (SELECT ROUND(AVG(rating::numeric), 1)
             FROM reviews r
            WHERE r.vehicle_id = vehicles.id

@@ -3,7 +3,18 @@ const { resolveImage } = require('../utils/imageResolver')
 
 // Liste publique des accessoires actifs. Le champ `image` pointe vers
 // /api/accessories/:id/image et `inStock` est calculé côté SQL.
+// `?vehicleId=<uuid>` restreint la liste aux accessoires rattachés à ce
+// véhicule ; un identifiant malformé est refusé (400) plutôt que d'échouer en
+// 500 côté SQL.
 async function listAccessories(req, res) {
+  const { vehicleId } = req.query
+  if (vehicleId !== undefined && vehicleId !== '') {
+    if (!accessoryService.isValidAccessoryId(vehicleId)) {
+      return res.status(400).json({ error: 'vehicleId invalide.' })
+    }
+    const accessories = await accessoryService.listActiveAccessories({ vehicleId })
+    return res.json({ accessories })
+  }
   const accessories = await accessoryService.listActiveAccessories()
   return res.json({ accessories })
 }

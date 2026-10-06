@@ -126,11 +126,13 @@ function Configure() {
     }
   }, [vehicleId])
 
-  // Accessoires : catalogue en base, indissociable des specs du véhicule.
+  // Accessoires : catalogue en base, restreint au véhicule courant (table
+  // vehicle_accessories). Un véhicule sans accessoire rattaché reçoit une liste
+  // vide, l'onglet « Options » affiche alors son état vide.
   useEffect(() => {
     let cancelled = false
     api
-      .get('/accessories')
+      .get('/accessories', { params: { vehicleId } })
       .then(({ data }) => {
         if (!cancelled) setAccessories(toList(data?.accessories))
       })
@@ -140,7 +142,7 @@ function Configure() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [vehicleId])
 
   const specs = vehicle?.specs ?? null
   const models = useMemo(() => toList(specs?.models), [specs])
@@ -423,6 +425,9 @@ function Configure() {
           activeIndex={activeIndex}
           onSelect={handleTabSelect}
           onOpen360={() => setShow3D(true)}
+          // L'info-bulle seule varie : le bouton reste actif, on n'affiche pas
+          // « bientôt disponible » pendant le chargement où l'on ignore tout.
+          has3dExterior={vehicle ? Boolean(vehicle.has3dExterior) : true}
         />
 
         <div className="mx-auto grid w-full max-w-[1800px] gap-8 px-6 md:grid-cols-2">

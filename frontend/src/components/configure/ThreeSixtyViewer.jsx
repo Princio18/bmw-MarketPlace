@@ -22,6 +22,11 @@ function ThreeSixtyViewer({ vehicle, bodyColor = null, onClose }) {
     mode,
     bodyColor,
     active: true,
+    // Assignation par véhicule : absentes tant que l'admin n'a pas rattaché
+    // de `.glb`. Le hook les transforme en état `error` sans jamais appeler
+    // GLTFLoader, ce qui affiche l'écran « modèle non disponible ».
+    exteriorModelUrl: vehicle?.exteriorModelUrl ?? null,
+    interiorModelUrl: vehicle?.interiorModelUrl ?? null,
   })
 
   // L'échec du modèle est une information externe (le chargement GLTF) : on
