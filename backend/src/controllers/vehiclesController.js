@@ -150,6 +150,11 @@ async function getVehicleImage(req, res) {
     }
     res.set('Content-Type', image.contentType)
     res.set('Cache-Control', 'public, max-age=86400')
+    // Trace la source réellement servie. resolveImage() bascule silencieusement
+    // sur le BYTEA si le bucket est injoignable, et la réponse reste un 200
+    // presque identique : sans cet en-tête, on confondrait un bucket en panne
+    // avec un bucket qui fonctionne, précisément au moment du vidage BYTEA.
+    res.set('X-Image-Source', image.source)
     res.send(image.buffer)
   } catch (err) {
     console.error('[vehicles] erreur GET /api/vehicles/:id/image :', err)

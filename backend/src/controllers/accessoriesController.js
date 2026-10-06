@@ -31,6 +31,9 @@ async function getAccessoryImage(req, res) {
     }
     res.set('Content-Type', image.contentType)
     res.set('Cache-Control', 'public, max-age=86400')
+    // Même rôle que sur les véhicules : rend visible le repli BYTEA silencieux
+    // de resolveImage(), sans quoi un bucket en panne passe pour un succès.
+    res.set('X-Image-Source', image.source)
     return res.send(image.buffer)
   } catch (err) {
     console.error('[accessories] erreur GET /api/accessories/:id/image :', err)
