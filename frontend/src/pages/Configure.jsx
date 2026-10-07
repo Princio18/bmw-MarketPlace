@@ -18,7 +18,6 @@ import SaveConfigurationModal from '../components/configure/modals/SaveConfigura
 import StandardEquipmentModal from '../components/configure/modals/StandardEquipmentModal'
 import StepTabs from '../components/configure/StepTabs'
 import TechnicalDataModal from '../components/configure/modals/TechnicalDataModal'
-import UpholsterySection from '../components/configure/sections/UpholsterySection'
 import {
   BOTTOM_BAR_HEIGHT,
   NAVBAR_HEIGHT,
@@ -30,7 +29,6 @@ const TABS = [
   'engines',
   'exteriorColours',
   'alloyWheels',
-  'upholstery',
   'optionalEquipment',
   'charging',
   'summary',
@@ -41,7 +39,6 @@ const DEDICATED_SECTIONS = {
   engines: EnginesSection,
   exteriorColours: ExteriorColourSection,
   alloyWheels: AlloyWheelsSection,
-  upholstery: UpholsterySection,
   optionalEquipment: AccessoriesSection,
 }
 
@@ -52,7 +49,6 @@ const TAB_OPTION_KEY = {
   engines: 'engineId',
   exteriorColours: 'exteriorColourId',
   alloyWheels: 'alloyWheelId',
-  upholstery: 'upholsteryId',
 }
 
 const EMPTY_SELECTION = {
@@ -60,7 +56,6 @@ const EMPTY_SELECTION = {
   engineId: null,
   exteriorColourId: null,
   alloyWheelId: null,
-  upholsteryId: null,
   accessoryIds: [],
 }
 
@@ -281,20 +276,13 @@ function Configure() {
     )
     if (activeTab === 'alloyWheels' && wheel?.carImage) return wheel.carImage
 
-    const upholstery = toList(specs?.upholstery).find(
-      (item) => item.id === selectedOptions.upholsteryId,
-    )
-    if (activeTab === 'upholstery' && upholstery?.image) return upholstery.image
-
     return colour?.image || `/api/vehicles/${vehicle?.id}/image`
   }, [
     activeTab,
     specs?.exteriorColours,
     specs?.alloyWheels,
-    specs?.upholstery,
     selectedOptions.exteriorColourId,
     selectedOptions.alloyWheelId,
-    selectedOptions.upholsteryId,
     vehicle?.id,
   ])
 

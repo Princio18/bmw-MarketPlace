@@ -20,7 +20,6 @@ const CONFIG_ROWS = [
   { key: 'engineId', list: 'engines', label: 'configEngine' },
   { key: 'exteriorColourId', list: 'exteriorColours', label: 'configExterior' },
   { key: 'alloyWheelId', list: 'alloyWheels', label: 'configWheels' },
-  { key: 'upholsteryId', list: 'upholstery', label: 'configUpholstery' },
 ]
 
 const toList = (value) => (Array.isArray(value) ? value : [])

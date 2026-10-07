@@ -129,7 +129,6 @@
     "configEngine": "Engine",
     "configExterior": "Exterior",
     "configWheels": "Wheels",
-    "configUpholstery": "Interior",
     "configAccessories": "Accessories",
     "configNone": "Configuration not started.",
     "configUnavailable": "Unavailable",
