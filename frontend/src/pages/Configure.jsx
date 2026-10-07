@@ -144,6 +144,15 @@ function Configure() {
     }
   }, [vehicleId])
 
+  // L'onglet « Charging » n'a de sens que pour un véhicule rechargeable :
+  // fully electric ou plug-in hybrid. On le retire donc de la liste des onglets
+  // pour tous les autres drivetrains (petrol, diesel, concept, protection).
+  const tabs = useMemo(() => {
+    const drivetrain = vehicle?.drivetrain
+    const supportsCharging = drivetrain === 'electric' || drivetrain === 'hybrid'
+    return supportsCharging ? TABS : TABS.filter((tab) => tab !== 'charging')
+  }, [vehicle?.drivetrain])
+
   const specs = vehicle?.specs ?? null
   const models = useMemo(() => toList(specs?.models), [specs])
   const financeOptions = useMemo(() => toList(specs?.financeOptions), [specs])
@@ -209,7 +218,7 @@ function Configure() {
   // section la plus visible, puis on déconnecte au démontage.
   useEffect(() => {
     if (!vehicle) return undefined
-    const sections = TABS.map((tab) =>
+    const sections = tabs.map((tab) =>
       document.getElementById(`section-${tab}`),
     ).filter(Boolean)
     if (sections.length === 0) return undefined
@@ -230,14 +239,14 @@ function Configure() {
         })
         if (!bestId) return
         const tab = bestId.replace('section-', '')
-        if (TABS.includes(tab)) setActiveTab(tab)
+        if (tabs.includes(tab)) setActiveTab(tab)
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] },
     )
 
     sections.forEach((section) => observer.observe(section))
     return () => observer.disconnect()
-  }, [vehicle])
+  }, [vehicle, tabs])
 
   // AutOsave : à chaque changement de configuration, le panier est réécrit en
   // base. Le debounce évite une requête par option cliquée.
@@ -325,7 +334,7 @@ function Configure() {
   // fermer l'une n'affecte l'état d'aucune autre.
   const closeModal = useCallback(() => setOpenModal(null), [])
 
-  const activeIndex = Math.max(TABS.indexOf(activeTab), 0)
+  const activeIndex = Math.max(tabs.indexOf(activeTab), 0)
   const consumption = specs?.technicalData?.consumption
 
   const renderSection = (tab) => {
@@ -420,7 +429,7 @@ function Configure() {
         }}
       >
         <StepTabs
-          tabs={TABS}
+          tabs={tabs}
           activeTab={activeTab}
           activeIndex={activeIndex}
           onSelect={handleTabSelect}
@@ -439,7 +448,7 @@ function Configure() {
           </div>
 
           <div>
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <section
                 key={tab}
                 id={`section-${tab}`}
