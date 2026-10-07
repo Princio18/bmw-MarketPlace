@@ -185,6 +185,32 @@ async function restoreAccessory(req, res) {
   return res.json(await accessoryService.findAccessoryById(req.params.id))
 }
 
+// Remplace la liste des véhicules sur lesquels cet accessoire apparaît.
+// L'admin envoie la sélection complète (`vehicleIds`), le serveur remplace
+// l'ensemble — même contrat que PUT /admin/vehicles/:id/accessories.
+async function updateAccessoryVehicles(req, res) {
+  if (!accessoryService.isValidAccessoryId(req.params.id)) return notFound(res)
+  const existing = await accessoryService.findAccessoryById(req.params.id)
+  if (!existing) return notFound(res)
+
+  const vehicleIds = req.body?.vehicleIds
+  if (!Array.isArray(vehicleIds)) {
+    return res.status(400).json({ error: 'vehicleIds doit être un tableau.' })
+  }
+
+  const { invalid, unknown } = await accessoryService.setAccessoryVehicles(
+    existing.id,
+    vehicleIds,
+  )
+  if (invalid.length > 0 || unknown.length > 0) {
+    return res
+      .status(400)
+      .json({ error: 'Un ou plusieurs véhicules sont invalides ou introuvables.' })
+  }
+
+  return res.json(await accessoryService.findAccessoryById(existing.id))
+}
+
 const router = Router()
 
 router.use(authenticate)
@@ -199,6 +225,7 @@ router.get('/', canManage, listAccessories)
 router.post('/', canManage, upload.single('image'), createAccessory)
 router.get('/:id', canManage, getAccessory)
 router.put('/:id/restore', canManage, restoreAccessory)
+router.put('/:id/vehicles', canManage, updateAccessoryVehicles)
 router.put('/:id', canManage, upload.single('image'), updateAccessory)
 router.delete('/:id', canManage, deleteAccessory)
 

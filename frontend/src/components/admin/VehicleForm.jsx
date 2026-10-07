@@ -85,7 +85,16 @@ function VehicleForm({ vehicle, onSuccess }) {
       .then(({ data }) => {
         if (cancelled) return
         const list = Array.isArray(data?.accessories) ? data.accessories : []
-        setAllAccessories(list.filter((a) => !a.deletedAt))
+        const visible = list.filter((a) => !a.deletedAt)
+        setAllAccessories(visible)
+        // Un accessoire supprimé n'apparaît pas dans la liste : on écarte son id
+        // du pré-remplissage, sinon le PUT /admin/vehicles/:id/accessories
+        // renverrait un 400 et bloquerait TOUTE la sauvegarde du véhicule.
+        const visibleIds = new Set(visible.map((a) => a.id))
+        setValues((prev) => ({
+          ...prev,
+          accessoryIds: prev.accessoryIds.filter((id) => visibleIds.has(id)),
+        }))
       })
       .catch(() => {
         if (!cancelled) setAllAccessories([])

@@ -61,7 +61,11 @@
     "created": "Accessoire créé.",
     "edit": "Enregistrer",
     "updated": "Accessoire mis à jour.",
-    "genericError": "Impossible d'enregistrer l'accessoire."
+    "genericError": "Impossible d'enregistrer l'accessoire.",
+    "vehicles": "Véhicules",
+    "vehiclesHint": "Les véhicules cochés affichent cet accessoire dans leur onglet « Options ».",
+    "vehiclesEmpty": "Aucun véhicule disponible.",
+    "mPerformance": "M Performance"
   },
   "accessoryFormPage": {
     "back": "Retour aux accessoires",

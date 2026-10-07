@@ -29,11 +29,37 @@ function AccessoryForm({ accessory, onSuccess }) {
   const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState('')
   const [success, setSuccess] = useState('')
+  const [vehicleIds, setVehicleIds] = useState(() =>
+    Array.isArray(accessory?.vehicleIds) ? accessory.vehicleIds : [],
+  )
+  const [allVehicles, setAllVehicles] = useState([])
   const revokeRef = useRef('')
 
   useEffect(() => {
     return () => {
       if (revokeRef.current) URL.revokeObjectURL(revokeRef.current)
+    }
+  }, [])
+
+  // Catalogue des véhicules actifs : permet de rattacher l'accessoire au moment
+  // de la création, sans repasser par le formulaire Véhicule. Un accessoire non
+  // rattaché n'apparaît jamais dans l'onglet « Options » du configurateur.
+  useEffect(() => {
+    let cancelled = false
+    api
+      .get('/admin/vehicles', {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      })
+      .then(({ data }) => {
+        if (cancelled) return
+        const list = Array.isArray(data) ? data : []
+        setAllVehicles(list.filter((v) => !v.deletedAt))
+      })
+      .catch(() => {
+        if (!cancelled) setAllVehicles([])
+      })
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -54,6 +80,21 @@ function AccessoryForm({ accessory, onSuccess }) {
     const next = file ? URL.createObjectURL(file) : ''
     revokeRef.current = next
     setPreviewUrl(next)
+  }
+
+  const handleVehicleToggle = (id) => {
+    setVehicleIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  const vehicleLabel = (vehicle) => {
+    const base = [vehicle.modelName, vehicle.variantLabel]
+      .filter(Boolean)
+      .join(' ')
+    return vehicle.isMPerformance
+      ? `${base} ${t('accessoryForm.mPerformance')}`
+      : base
   }
 
   const handleSubmit = async (e) => {
@@ -84,16 +125,27 @@ function AccessoryForm({ accessory, onSuccess }) {
     setServerError('')
     setSuccess('')
     try {
-      await api[isEdit ? 'put' : 'post'](
+      const { data } = await api[isEdit ? 'put' : 'post'](
         isEdit ? `/admin/accessories/${accessory.id}` : '/admin/accessories',
         payload,
         { headers: { Authorization: `Bearer ${getAuthToken()}` } },
       )
+      // L'accessoire existe : on remplace la liste des véhicules qui
+      // l'affichent (l'id vient de la réponse à la création).
+      const targetId = isEdit ? accessory.id : data?.id
+      if (targetId) {
+        await api.put(
+          `/admin/accessories/${targetId}/vehicles`,
+          { vehicleIds },
+          { headers: { Authorization: `Bearer ${getAuthToken()}` } },
+        )
+      }
       setSuccess(t(isEdit ? 'accessoryForm.updated' : 'accessoryForm.created'))
       if (!isEdit) {
         setValues(emptyValues())
         setImageFile(null)
         setPreviewUrl('')
+        setVehicleIds([])
       }
       onSuccess?.()
     } catch (err) {
@@ -253,6 +305,37 @@ function AccessoryForm({ accessory, onSuccess }) {
           {isEdit ? t('accessoryForm.imageEditHint') : t('accessoryForm.imagePlaceholder')}
         </p>
       </div>
+
+      <fieldset>
+        <legend className="text-sm font-medium text-gray-800">
+          {t('accessoryForm.vehicles')}
+        </legend>
+        {allVehicles.length === 0 ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t('accessoryForm.vehiclesEmpty')}
+          </p>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {allVehicles.map((vehicle) => (
+              <label
+                key={vehicle.id}
+                className="flex items-center gap-2 text-sm text-gray-800"
+              >
+                <input
+                  type="checkbox"
+                  checked={vehicleIds.includes(vehicle.id)}
+                  onChange={() => handleVehicleToggle(vehicle.id)}
+                  className="h-4 w-4 accent-blue-600"
+                />
+                {vehicleLabel(vehicle)}
+              </label>
+            ))}
+          </div>
+        )}
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {t('accessoryForm.vehiclesHint')}
+        </p>
+      </fieldset>
 
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
       {success && <p className="text-sm text-emerald-600">{success}</p>}

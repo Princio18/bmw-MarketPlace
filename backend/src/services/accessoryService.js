@@ -45,6 +45,19 @@ const ACCESSORY_LIST_SELECT = ACCESSORY_SELECT.replace(
   '',
 )
 
+// SELECT de détail (admin) : ACCESSORY_SELECT + les véhicules rattachés, pour
+// pré-remplir le formulaire d'édition. Volontairement distinct de
+// ACCESSORY_LIST_SELECT : la sous-requête n'a aucun sens sur les listes.
+const ACCESSORY_DETAIL_SELECT = ACCESSORY_SELECT.replace(
+  '  FROM accessories a',
+  `  , ARRAY(
+       SELECT va.vehicle_id
+         FROM vehicle_accessories va
+        WHERE va.accessory_id = a.id
+     ) AS "vehicleIds"
+  FROM accessories a`,
+)
+
 // Sépare les ids en deux lots : ceux qu'on peut envoyer à Postgres (UUID) et
 // ceux qui sont mal formés. Les valeurs vides / nulles sont simplement ignorées
 // (configuration partielle), mais une valeur non vide qui n'est pas un UUID est
@@ -96,16 +109,27 @@ async function listActiveAccessories({ vehicleId } = {}) {
 // Retourne { invalid, unknown } — deux listes vides si tout est bon.
 async function setVehicleAccessories(vehicleId, accessoryIds) {
   const { valid, invalid } = splitIds(accessoryIds)
-  const unique = [...new Set(valid)]
+  let unique = [...new Set(valid)]
 
   let unknown = []
   if (unique.length > 0) {
     const found = await prisma.$queryRawUnsafe(
-      `SELECT id FROM accessories WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL`,
+      `SELECT id, deleted_at IS NOT NULL AS "deleted"
+         FROM accessories
+        WHERE id = ANY($1::uuid[])`,
       unique,
     )
-    const foundIds = new Set(found.map((row) => row.id))
-    unknown = unique.filter((id) => !foundIds.has(id))
+    const known = new Set(found.map((row) => row.id))
+    const deleted = new Set(
+      found.filter((row) => row.deleted).map((row) => row.id),
+    )
+    unknown = unique.filter((id) => !known.has(id))
+    // Un accessoire supprimé (soft-delete) peut rester rattaché dans les
+    // données : on l'ignore. Sans ce filtre, `unknown` le remonterait et le
+    // PUT /admin/vehicles/:id/accessories renverrait un 400 qui bloquerait
+    // TOUTE la sauvegarde du véhicule, sans que l'admin ait fait quoi que ce
+    // soit de mal.
+    unique = unique.filter((id) => !deleted.has(id))
   }
 
   if (invalid.length > 0 || unknown.length > 0) {
@@ -118,6 +142,46 @@ async function setVehicleAccessories(vehicleId, accessoryIds) {
       vehicleId,
     ),
     ...unique.map((accessoryId) =>
+      prisma.$executeRawUnsafe(
+        `INSERT INTO vehicle_accessories (vehicle_id, accessory_id)
+         VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        vehicleId,
+        accessoryId,
+      ),
+    ),
+  ])
+
+  return { invalid: [], unknown: [] }
+}
+
+// Remplace l'ENSEMBLE des véhicules sur lesquels un accessoire apparaît.
+// Miroir exact de setVehicleAccessories : l'admin envoie la liste complète des
+// véhicules cochés, le serveur remplace les liaisons dans une transaction.
+// Retourne { invalid, unknown } — deux listes vides si tout est bon.
+async function setAccessoryVehicles(accessoryId, vehicleIds) {
+  const { valid, invalid } = splitIds(vehicleIds)
+  const unique = [...new Set(valid)]
+
+  let unknown = []
+  if (unique.length > 0) {
+    const found = await prisma.$queryRawUnsafe(
+      `SELECT id FROM vehicles WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL`,
+      unique,
+    )
+    const known = new Set(found.map((row) => row.id))
+    unknown = unique.filter((id) => !known.has(id))
+  }
+
+  if (invalid.length > 0 || unknown.length > 0) {
+    return { invalid, unknown }
+  }
+
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe(
+      `DELETE FROM vehicle_accessories WHERE accessory_id = $1`,
+      accessoryId,
+    ),
+    ...unique.map((vehicleId) =>
       prisma.$executeRawUnsafe(
         `INSERT INTO vehicle_accessories (vehicle_id, accessory_id)
          VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -156,7 +220,7 @@ async function listAllAccessories() {
 }
 
 async function findAccessoryById(id) {
-  const rows = await prisma.$queryRawUnsafe(`${ACCESSORY_SELECT} WHERE a.id = $1`, id)
+  const rows = await prisma.$queryRawUnsafe(`${ACCESSORY_DETAIL_SELECT} WHERE a.id = $1`, id)
   return rows.length ? pgSafe(rows[0]) : null
 }
 
@@ -234,6 +298,7 @@ module.exports = {
   isValidAccessoryId,
   listActiveAccessories,
   setVehicleAccessories,
+  setAccessoryVehicles,
   findUnassignedAccessoryIds,
   listAllAccessories,
   findAccessoryById,

@@ -61,7 +61,11 @@
     "created": "Accessory created.",
     "edit": "Save changes",
     "updated": "Accessory updated.",
-    "genericError": "Unable to save the accessory."
+    "genericError": "Unable to save the accessory.",
+    "vehicles": "Vehicles",
+    "vehiclesHint": "Checked vehicles display this accessory in their \"Optional Equipment\" tab.",
+    "vehiclesEmpty": "No vehicles available.",
+    "mPerformance": "M Performance"
   },
   "accessoryFormPage": {
     "back": "Back to accessories",
