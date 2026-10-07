@@ -29,7 +29,7 @@ const DEFAULT_DIR = path.resolve(
 )
 const MAX_DIMENSION = 1200
 const WEBP_QUALITY = 80
-const IMAGE_EXT = /\.(png|jpe?g|webp)$/i
+const IMAGE_EXT = /\.(png|jpe?g|webp|jfif)$/i
 
 function normalize(value) {
   return String(value)
