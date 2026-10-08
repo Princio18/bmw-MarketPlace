@@ -10,16 +10,13 @@ import bmwLogo from '../../assets/images/bmw-logo1.png'
 import { formatPrice } from '../../lib/price'
 import { NAVBAR_HEIGHT } from './layout'
 
-function MiniStat({ label, value, fallback }) {
+function MiniStat({ label, value }) {
   return (
-    <div className="flex flex-col">
-      <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-gray-400">
-        {label}
-        <span title={label}>
-          <Info size={11} className="text-gray-400" aria-hidden="true" />
-        </span>
-      </span>
-      <span className="text-sm font-bold text-gray-900">{value || fallback}</span>
+    <div>
+      <span className="text-xs text-gray-500">{label}</span>
+      <div className="flex items-center gap-1 font-semibold">
+        {value} <Info className="h-3.5 w-3.5 text-gray-400" title={label} />
+      </div>
     </div>
   )
 }
@@ -47,7 +44,6 @@ function PriceBlock({ label, value, onClick, icon: Icon, suffix }) {
 
 function ConfiguratorNavbar({
   vehicle,
-  keySpecs,
   totalPrice,
   monthlyPrice,
   locale,
@@ -88,21 +84,9 @@ function ConfiguratorNavbar({
         </div>
 
         <div className="ml-auto hidden items-center gap-6 xl:flex">
-          <MiniStat
-            label={t('configure.navbar.range')}
-            value={keySpecs?.electricRange}
-            fallback={fallback}
-          />
-          <MiniStat
-            label={t('configure.navbar.consumption')}
-            value={keySpecs?.energyConsumption}
-            fallback={fallback}
-          />
-          <MiniStat
-            label={t('configure.navbar.minChargeTime')}
-            value={keySpecs?.minChargeTimeDC}
-            fallback={fallback}
-          />
+          {vehicle.specs?.keySpecs?.map((spec) => (
+            <MiniStat key={spec.label} label={spec.label} value={spec.value} />
+          ))}
           <button
             type="button"
             onClick={() => onOpenModal('technicalData')}

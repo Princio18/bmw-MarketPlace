@@ -1,6 +1,28 @@
 require('dotenv').config()
 
 const { closeDb, prisma } = require('../src/db')
+const technicalDataByVehicle = require('./vehicleTechnicalData')
+const { buildKeySpecs, buildEngineCard } = require('./deriveConfiguratorCards')
+
+// Résout le slug catalogue d'un véhicule pour retrouver ses données
+// techniques dans vehicleTechnicalData.js.
+function resolveSlug(vehicle) {
+  const name = vehicle.model_name.replace(/^BMW\s+/i, '').toLowerCase().trim()
+  if (name === 'ix3' && vehicle.is_m_performance) return 'ix3-m-performance'
+  const map = {
+    'm340i': 'm340i',
+    '520d': '520d',
+    '7 series protection': '7-series-protection',
+    'concept xm': 'concept-xm',
+    '330e': '330e',
+    'ix1': 'ix1',
+    'ix2': 'ix2',
+    'ix3': 'ix3',
+    'ix5': 'ix5',
+    'ix': 'ix',
+  }
+  return map[name] || null
+}
 
 // Specs du configurateur ("Build & Price"). Injectées sur un véhicule
 // électrique déjà seedé pour alimenter la page /configure/:vehicleId.
@@ -336,6 +358,50 @@ async function run() {
   console.log(
     '[seed:configurator-specs] Les accessoires ne sont PAS dans ces specs : ils vivent en base (table accessories) et sont lus via GET /api/accessories.',
   )
+
+  // Fusion des clés dérivées (technicalData, keySpecs, engines) pour tous les
+  // véhicules du catalogue. jsonb_set imbriqué (create_missing=true) : seule
+  // ces 3 clés sont écrites, les autres (standardEquipment, models, etc.) ne
+  // sont jamais écrasées.
+  const vehicles = await prisma.$queryRawUnsafe(
+    'SELECT id, model_name, variant_label, is_m_performance, base_price FROM vehicles WHERE deleted_at IS NULL ORDER BY model_name',
+  )
+
+  let updated = 0
+  let ignored = 0
+
+  for (const vehicle of vehicles) {
+    const slug = resolveSlug(vehicle)
+    const specTech = slug ? technicalDataByVehicle[slug] : null
+
+    if (!specTech) {
+      ignored += 1
+      console.log(`[seed:specs] Aucune donnée technique pour ${vehicle.model_name}, ignoré.`)
+      continue
+    }
+
+    const keySpecs = buildKeySpecs(specTech)
+    const engines = [buildEngineCard(vehicle, specTech)]
+
+    await prisma.$executeRawUnsafe(
+      `UPDATE vehicles SET specs =
+         jsonb_set(
+           jsonb_set(
+             jsonb_set(COALESCE(specs, '{}'::jsonb), '{technicalData}', $1::jsonb, true),
+             '{keySpecs}', $2::jsonb, true
+           ),
+           '{engines}', $3::jsonb, true
+         )
+       WHERE id = $4`,
+      JSON.stringify(specTech),
+      JSON.stringify(keySpecs),
+      JSON.stringify(engines),
+      vehicle.id,
+    )
+    updated += 1
+  }
+
+  console.log(`[seed:specs] ${updated} véhicule(s) mis à jour, ${ignored} ignoré(s).`)
 }
 
 run()

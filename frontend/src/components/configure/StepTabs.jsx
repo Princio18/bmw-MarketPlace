@@ -40,64 +40,70 @@ function StepTabs({
       style={{ top: NAVBAR_HEIGHT, height: TABS_HEIGHT }}
     >
       <div className="mx-auto flex h-full w-full max-w-[1800px] items-center gap-4 px-6">
-        <button
-          type="button"
-          // Le bouton reste TOUJOURS actif : sans modèle, le viewer affiche
-          // l'écran « non disponible » existant. L'info-bulle annonce
-          // simplement l'absence de modèle au lieu de laisser deviner l'erreur.
-          title={has3dExterior
-            ? t('configure.steps.view360')
-            : t('configure.view360.comingSoon')}
-          aria-label={t('configure.steps.view360')}
-          onClick={onOpen360}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
-        >
-          <RotateCw size={14} />
-        </button>
+        <div className="flex flex-shrink-0 items-center gap-3">
+          <button
+            type="button"
+            // Le bouton reste TOUJOURS actif : sans modèle, le viewer affiche
+            // l'écran « non disponible » existant. L'info-bulle annonce
+            // simplement l'absence de modèle au lieu de laisser deviner l'erreur.
+            title={has3dExterior
+              ? t('configure.steps.view360')
+              : t('configure.view360.comingSoon')}
+            aria-label={t('configure.steps.view360')}
+            onClick={onOpen360}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
+          >
+            <RotateCw size={14} />
+          </button>
 
-        <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-500">
-          {t('configure.steps.counter', {
-            current: activeIndex + 1,
-            total: tabs.length,
-          })}
-        </span>
+          <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-500">
+            {t('configure.steps.counter', {
+              current: activeIndex + 1,
+              total: tabs.length,
+            })}
+          </span>
+        </div>
 
         <div
           ref={trackRef}
-          className="flex flex-1 items-center gap-6 overflow-x-auto whitespace-nowrap"
+          className="flex flex-1 items-center overflow-x-auto"
         >
-          {tabs.map((tab) => {
-            const isActive = tab === activeTab
-            return (
-              <button
-                key={tab}
-                type="button"
-                ref={(el) => {
-                  tabRefs.current[tab] = el
-                }}
-                onClick={() => onSelect(tab)}
-                aria-current={isActive ? 'true' : undefined}
-                className={
-                  isActive
-                    ? 'border-b-2 border-blue-600 pb-0.5 text-sm font-bold text-gray-900'
-                    : 'border-b-2 border-transparent pb-0.5 text-sm text-gray-500 transition hover:text-gray-800'
-                }
-              >
-                {t(`configure.tabs.${tab}`)}
-              </button>
-            )
-          })}
+          <div className="mx-auto flex items-center gap-6 whitespace-nowrap">
+            {tabs.map((tab) => {
+              const isActive = tab === activeTab
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  ref={(el) => {
+                    tabRefs.current[tab] = el
+                  }}
+                  onClick={() => onSelect(tab)}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={
+                    isActive
+                      ? 'border-b-2 border-blue-600 pb-0.5 text-sm font-bold text-gray-900'
+                      : 'border-b-2 border-transparent pb-0.5 text-sm text-gray-500 transition hover:text-gray-800'
+                  }
+                >
+                  {t(`configure.tabs.${tab}`)}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        <button
-          type="button"
-          title={t('configure.steps.scrollTabs')}
-          aria-label={t('configure.steps.scrollTabs')}
-          onClick={scrollTrackRight}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
-        >
-          <ChevronRight size={14} />
-        </button>
+        <div className="flex-shrink-0">
+          <button
+            type="button"
+            title={t('configure.steps.scrollTabs')}
+            aria-label={t('configure.steps.scrollTabs')}
+            onClick={scrollTrackRight}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
       </div>
     </div>
   )

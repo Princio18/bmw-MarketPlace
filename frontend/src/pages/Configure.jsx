@@ -402,7 +402,6 @@ function Configure() {
     <div className="min-h-screen bg-white">
       <ConfiguratorNavbar
         vehicle={vehicle}
-        keySpecs={specs?.keySpecs}
         totalPrice={totalPrice}
         monthlyPrice={monthlyPrice}
         locale={locale}

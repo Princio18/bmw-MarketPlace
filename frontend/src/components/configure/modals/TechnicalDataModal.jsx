@@ -68,6 +68,10 @@ function TechnicalDataModal({ open, specs, onClose }) {
   const { t } = useTranslation()
   const technicalData = specs?.technicalData ?? {}
 
+  const visibleSections = SECTIONS.filter(
+    (section) => section.key !== 'electricRange' || technicalData.electricRange != null,
+  )
+
   return (
     <Modal
       open={open}
@@ -75,7 +79,7 @@ function TechnicalDataModal({ open, specs, onClose }) {
       onClose={onClose}
     >
       <div className="space-y-8">
-        {SECTIONS.map((section) => {
+        {visibleSections.map((section) => {
           const group = technicalData[section.key] ?? {}
           return (
             <section key={section.key}>
