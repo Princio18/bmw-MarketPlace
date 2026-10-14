@@ -4,6 +4,7 @@ import { X, Package, ShoppingBag, Heart } from 'lucide-react'
 import api from '@/services/api'
 import { getAuthToken } from '@/lib/authToken'
 import { formatPrice } from '@/lib/price'
+import { resolveConfiguration } from '@/utils/resolveConfiguration'
 import { useAdminSearch } from '@/context/useAdminSearch'
 
 const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
@@ -13,31 +14,7 @@ const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
 // direct pendant qu'il discute avec lui.
 const DETAIL_POLL_MS = 15000
 
-// Correspondance entre les clés stockées dans configuration_data et les listes
-// de specs du véhicule, dans l'ordre d'affichage.
-const CONFIG_ROWS = [
-  { key: 'modelId', list: 'models', label: 'configModel' },
-  { key: 'engineId', list: 'engines', label: 'configEngine' },
-  { key: 'exteriorColourId', list: 'exteriorColours', label: 'configExterior' },
-  { key: 'alloyWheelId', list: 'alloyWheels', label: 'configWheels' },
-]
-
 const toList = (value) => (Array.isArray(value) ? value : [])
-
-// La colonne `configuration_data` peut être renvoyée en JSONB (objet) ou en
-// texte selon la forme du jsonb driver : on accepte les deux.
-function asObject(value) {
-  if (value && typeof value === 'object') return value
-  if (typeof value === 'string' && value.trim()) {
-    try {
-      const parsed = JSON.parse(value)
-      return parsed && typeof parsed === 'object' ? parsed : {}
-    } catch {
-      return {}
-    }
-  }
-  return {}
-}
 
 // Catalogue des accessoires chargé une seule fois par session admin : il est
 // partagé par tous les clients consultés et n'a aucune raison d'être rechargé
@@ -82,64 +59,27 @@ function StatusPill({ status }) {
 function ConfigurationSummary({ cart, accessories }) {
   const { t } = useTranslation('admin')
 
-  // Les deux blobs arrivent du serveur : on les convertit une seule fois pour
-  // que les memos ci-dessous aient une dépendance stable.
-  const specs = useMemo(() => asObject(cart.specs), [cart.specs])
-  const configuration = useMemo(
-    () => asObject(cart.configurationData),
-    [cart.configurationData],
-  )
-
-  const rows = useMemo(
+  const {
+    rows,
+    accessories: selectedAccessories,
+    optionalEquipment: selectedOptionalEquipment,
+    estimatedTotal,
+  } = useMemo(
     () =>
-      CONFIG_ROWS.map(({ key, list, label }) => {
-        const id = configuration[key]
-        if (!id) return null
-        const option = toList(specs[list]).find((item) => item?.id === id)
-        return {
-          key,
-          label: t(`clients.${label}`),
-          value: option?.name || id,
-          hint: option?.code || null,
-        }
-      }).filter(Boolean),
-    [configuration, specs, t],
+      resolveConfiguration(cart.configurationData, cart.specs, accessories, {
+        basePrice: cart.basePrice,
+        translate: (key, fallback) => t(`clients.${key}`, { defaultValue: fallback }),
+      }),
+    [cart.configurationData, cart.specs, cart.basePrice, accessories, t],
   )
 
-  const selectedAccessories = useMemo(() => {
-    // Dédupliqué : un identifiant en double ferait collision de clé React et
-    // gonflerait le total alors que le serveur ne le retient qu'une fois.
-    const ids = [...new Set(toList(configuration.accessoryIds))]
-    return ids.map((id) => {
-      const accessory = accessories.find((item) => item?.id === id)
-      return {
-        id,
-        name: accessory?.name || id,
-        // Un accessoire absent du catalogue public est archivé ou expiré : le
-        // serveur refuserait la commande, on l'exclut donc de l'estimation.
-        price: accessory && accessory.inStock ? Number(accessory.price) || 0 : null,
-      }
-    })
-  }, [configuration.accessoryIds, accessories])
-
-  if (rows.length === 0 && selectedAccessories.length === 0) {
+  if (rows.length === 0 && selectedAccessories.length === 0 && selectedOptionalEquipment.length === 0) {
     return (
       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
         {t('clients.configNone')}
       </p>
     )
   }
-
-  // ESTIMATION : le prix affiché au client peut différer du montant facturé,
-  // qui est toujours recalculé par le serveur à la création du paiement.
-  const model = toList(specs.models).find(
-    (item) => item?.id === configuration.modelId,
-  )
-  const base = model?.priceFrom ?? cart.basePrice ?? 0
-  const accessoriesTotal = selectedAccessories.reduce(
-    (sum, item) => sum + (item.price ?? 0),
-    0,
-  )
 
   return (
     <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-gray-700">
@@ -156,6 +96,31 @@ function ConfigurationSummary({ cart, accessories }) {
           </div>
         ))}
       </dl>
+
+      {selectedOptionalEquipment.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+            {t('clients.configOptionalEquipment')}
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            {selectedOptionalEquipment.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-baseline justify-between gap-3 text-xs"
+              >
+                <span className="truncate text-gray-600 dark:text-gray-300">
+                  {item.name}
+                </span>
+                <span className="shrink-0 text-gray-500 dark:text-gray-400">
+                  {item.price == null
+                    ? t('clients.configUnavailable')
+                    : formatPrice(item.price, 'en-GB')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {selectedAccessories.length > 0 && (
         <div className="mt-3">
@@ -187,7 +152,7 @@ function ConfigurationSummary({ cart, accessories }) {
           {t('clients.estimatedTotal')}
         </span>
         <span className="font-semibold text-gray-900 dark:text-white">
-          {formatPrice(base + accessoriesTotal, 'en-GB')}
+          {formatPrice(estimatedTotal, 'en-GB')}
         </span>
       </div>
     </div>

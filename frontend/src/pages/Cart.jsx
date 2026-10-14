@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
@@ -12,11 +12,12 @@ import { getErrorMessage } from '../utils/getErrorMessage'
 
 function Cart() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [cart, setCart] = useState(null)
   const [accessories, setAccessories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [paying, setPaying] = useState(false)
+  const [requesting, setRequesting] = useState(false)
   const [payError, setPayError] = useState('')
 
   useEffect(() => {
@@ -50,20 +51,25 @@ function Cart() {
   )
   const total = cart?.basePrice != null ? cart.basePrice + accessoriesTotal : null
 
-  const handlePay = async () => {
+  const handleRequestOffer = async () => {
     if (!cart) return
-    setPaying(true)
+    setRequesting(true)
     setPayError('')
     try {
       const { data } = await api.post(
-        '/payments/create-checkout-session',
-        { cartId: cart.id },
+        '/configuration-requests',
+        {
+          vehicleId: cart.vehicleId,
+          configurationData: cart.configurationData,
+        },
         { headers: { Authorization: `Bearer ${getAuthToken()}` } },
       )
-      window.location.href = data.url
+      navigate(`/configure/${cart.vehicleId}/confirm-request`, {
+        state: { requestId: data.id },
+      })
     } catch (err) {
-      setPayError(getErrorMessage(err, t('cart.payError')))
-      setPaying(false)
+      setPayError(getErrorMessage(err, t('cart.requestOfferError')))
+      setRequesting(false)
     }
   }
 
@@ -193,24 +199,14 @@ function Cart() {
                   </div>
                 </div>
 
-                {cart.basePrice == null ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="rounded-md bg-gray-200 px-6 py-3 text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                  >
-                    {t('cart.disabledPrice')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handlePay}
-                    disabled={paying}
-                    className="rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-                  >
-                    {paying ? t('cart.paying') : t('cart.payNow')}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleRequestOffer}
+                  disabled={requesting}
+                  className="rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                >
+                  {requesting ? t('cart.requestingOffer') : t('cart.requestOffer')}
+                </button>
 
                 {payError && (
                   <p className="text-sm text-destructive">{payError}</p>

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import {
   Check,
   ChevronDown,
+  ClipboardList,
   Heart,
   LogOut,
   MapPin,
   Menu,
   Moon,
+  Save,
   ShoppingBag,
   ShoppingCart,
   Sun,
@@ -43,8 +45,10 @@ const languages = [
   { code: 'fr', label: 'FR' },
 ]
 
-function Navbar() {
+function Navbar({ variant = 'dark' }) {
   const navigate = useNavigate()
+  const isLight = variant === 'light'
+  const textColor = isLight ? 'text-gray-900' : 'text-white'
   const { theme, toggleTheme } = useTheme()
   const { t, i18n } = useTranslation()
   const { isAuthenticated, logout } = useAuth()
@@ -98,7 +102,11 @@ function Navbar() {
   }
 
   return (
-    <nav className="absolute left-0 top-0 z-[1100] w-full border-b border-white/20">
+    <nav
+      className={`absolute left-0 top-0 z-[1100] w-full border-b ${
+        isLight ? 'border-gray-200' : 'border-white/20'
+      }`}
+    >
       <div className="flex h-[72px] items-center justify-between px-8">
         <div className="flex h-full items-center gap-8">
           <a
@@ -111,7 +119,7 @@ function Navbar() {
           >
             <img src={bmwLogo} alt="BMW" className="h-10 w-10" />
           </a>
-          <ul className="hidden h-full items-center gap-8 text-sm font-semibold text-white md:flex">
+          <ul className={`hidden h-full items-center gap-8 text-sm font-semibold md:flex ${textColor}`}>
             {navLinks.map((link) => {
               const isOpen = openMenu === link.key
               return (
@@ -155,7 +163,7 @@ function Navbar() {
           </ul>
         </div>
 
-        <div className="flex h-full items-center gap-6 text-white">
+        <div className={`flex h-full items-center gap-6 ${textColor}`}>
           <ul className="hidden h-full items-center gap-6 md:flex">
             <li className="group relative flex h-full items-center" ref={accountRef}>
               <button
@@ -168,7 +176,11 @@ function Navbar() {
                 <span className="relative inline-block">
                   <User size={22} />
                   {isAuthenticated && (
-                    <span className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500" />
+                    <span
+                      className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 bg-green-500 ${
+                        isLight ? 'border-gray-50' : 'border-white'
+                      }`}
+                    />
                   )}
                 </span>
               </button>
@@ -189,6 +201,28 @@ function Navbar() {
                     >
                       <ShoppingBag size={16} />
                       {t('common.myOrders')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountOpen(false)
+                        navigate('/my-requests')
+                      }}
+                      className="flex w-full items-center gap-3 rounded px-2 py-2 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
+                    >
+                      <ClipboardList size={16} />
+                      {t('common.myRequests')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountOpen(false)
+                        navigate('/my-configurations')
+                      }}
+                      className="flex w-full items-center gap-3 rounded px-2 py-2 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
+                    >
+                      <Save size={16} />
+                      {t('common.myConfigurations')}
                     </button>
                     <div className="my-1 h-px bg-gray-100" />
                     <button

@@ -21,7 +21,7 @@ function getTransporter() {
   return transporter
 }
 
-async function sendMail({ to, subject, html, attachments }) {
+async function sendMail({ to, subject, html, attachments, replyTo }) {
   if (isSmtpConfigured()) {
     const client = getTransporter()
     return client.sendMail({
@@ -30,11 +30,14 @@ async function sendMail({ to, subject, html, attachments }) {
       subject,
       html,
       attachments,
+      // Adresse surveillée (ex. SUPPORT_EMAIL) vers laquelle un client qui
+      // répond est redirigé : l'email personnel de l'admin n'est jamais exposé.
+      replyTo,
     })
   }
 
   if (process.env.ACTIVATION_DEV_MODE !== 'false') {
-    console.log(`[mail] to=${to} subject="${subject}${attachments?.length ? ` attachments=${attachments.length}` : ''}"\n${html}`)
+    console.log(`[mail] to=${to} subject="${subject}${replyTo ? ` replyTo=${replyTo}` : ''}${attachments?.length ? ` attachments=${attachments.length}` : ''}"\n${html}`)
   }
   return { messageId: 'dev-log', dev: true }
 }

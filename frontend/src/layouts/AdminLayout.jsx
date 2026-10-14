@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   ShoppingCart,
+  Inbox,
   CreditCard,
   Car,
   Package,
@@ -21,6 +22,7 @@ import { AdminSearchProvider } from '@/context/AdminSearchProvider'
 import { useAdminSearch } from '@/context/useAdminSearch'
 import LanguageSwitcher from '@/components/admin/LanguageSwitcher'
 import NotificationBell from '@/components/admin/NotificationBell'
+import NewRequestsBadge from '@/components/admin/NewRequestsBadge'
 import ProfileBlock from '@/components/admin/ProfileBlock'
 import ConfirmModal from '@/components/shared/ConfirmModal'
 import bmwLogo from '@/assets/images/bmw-logo.svg'
@@ -51,6 +53,13 @@ function Sidebar() {
       icon: ShoppingCart,
       label: t('sidebar.orders'),
       show: hasPermission('can_manage_orders'),
+    },
+    {
+      to: '/admin/requests',
+      icon: Inbox,
+      label: t('sidebar.requests'),
+      show: hasPermission('can_manage_orders'),
+      badge: true,
     },
     {
       to: '/admin/payment',
@@ -92,10 +101,11 @@ function Sidebar() {
       </div>
 
       <nav className="mt-8 flex flex-1 flex-col gap-1">
-        {items.map(({ to, icon: Icon, label }) => (
+        {items.map(({ to, icon: Icon, label, badge }) => (
           <NavLink key={to} to={to} className={linkClass}>
             <Icon size={18} />
             {label}
+            {badge && <NewRequestsBadge />}
           </NavLink>
         ))}
       </nav>

@@ -1,8 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bell } from 'lucide-react'
 import api from '@/services/api'
 import { getAuthToken } from '@/lib/authToken'
+
+// Cible de navigation par type de notification (null = pas de navigation).
+function notificationTarget(notification) {
+  switch (notification.type) {
+    case 'new_request':
+      return notification.relatedId ? `/admin/requests/${notification.relatedId}` : null
+    case 'new_order':
+      return '/admin/orders'
+    case 'refund':
+      return '/admin/payment'
+    case 'new_review':
+    case 'low_stock':
+      return '/admin/vehicles'
+    default:
+      return null
+  }
+}
 
 function relativeTime(value, language) {
   const date = new Date(value)
@@ -22,6 +40,7 @@ function relativeTime(value, language) {
 
 function NotificationBell() {
   const { t, i18n } = useTranslation('admin')
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [open, setOpen] = useState(false)
   const authHeader = { headers: { Authorization: `Bearer ${getAuthToken()}` } }
@@ -45,13 +64,16 @@ function NotificationBell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleRead = async (id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
+  const handleRead = async (notification) => {
+    const target = notificationTarget(notification)
+    setNotifications((prev) => prev.filter((n) => n.id !== notification.id))
+    setOpen(false)
     try {
-      await api.post(`/admin/notifications/${id}/read`, {}, authHeader)
+      await api.post(`/admin/notifications/${notification.id}/read`, {}, authHeader)
     } catch {
       /* ignore */
     }
+    if (target) navigate(target)
   }
 
   const handleReadAll = async () => {
@@ -109,7 +131,7 @@ function NotificationBell() {
                   <li key={n.id}>
                     <button
                       type="button"
-                      onClick={() => handleRead(n.id)}
+                      onClick={() => handleRead(n)}
                       className="flex w-full flex-col gap-1 border-b border-zinc-100 px-4 py-3 text-left transition hover:bg-zinc-50 dark:border-gray-800 dark:hover:bg-gray-800"
                     >
                       <span className="text-sm text-gray-800 dark:text-gray-100">

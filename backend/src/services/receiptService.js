@@ -190,7 +190,16 @@ async function generateReceiptPdf(order, user, vehicle, lines = []) {
 // Construit les lignes de règlement d'une commande : véhicule + les accessoires
 // choisis dans le panier. Les prix sont RELUS EN BASE à chaque envoi, ce qui
 // couvre aussi le renvoi manuel depuis l'admin (POST /admin/orders/:id/resend-receipt).
+// Pour une commande issue d'une offre, on réutilise le décompte FIGÉ
+// (price_breakdown) : les prix sont ceux de l'offre acceptée.
 async function buildOrderLines(order) {
+  const frozen = order.priceBreakdown?.lines
+  if (Array.isArray(frozen) && frozen.length > 0) {
+    return frozen
+      .filter((line) => line.counted !== false)
+      .map((line) => ({ label: line.label, amount: Number(line.amount) }))
+  }
+
   const { items } = await accessoryService.resolveAccessories(
     order.configurationData?.accessoryIds,
   )
@@ -211,6 +220,7 @@ async function sendOrderReceipt(orderId) {
        v.model_name AS "modelName",
        v.variant_label AS "variantLabel",
        v.base_price::float8 AS "basePrice",
+       o.price_breakdown AS "priceBreakdown",
        c.configuration_data AS "configurationData"
      FROM orders o
      JOIN users u ON u.id = o.user_id

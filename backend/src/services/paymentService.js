@@ -2,127 +2,8 @@ const { stripe } = require('./stripeClient')
 const { notify } = require('./adminNotifications')
 const { prisma } = require('../db')
 const { sendOrderReceipt } = require('./receiptService')
+const { background } = require('../utils/background')
 const accessoryService = require('./accessoryService')
-
-// Ligne de règlement « véhicule » : le prix fait toujours foi côté serveur
-// (vehicles.base_price), jamais celui envoyé par le frontend.
-function vehicleLine(vehicle) {
-  return {
-    label: `BMW ${vehicle.modelName} — ${vehicle.variantLabel}`,
-    amount: Number(vehicle.basePrice),
-  }
-}
-
-// Un line_item Stripe par ligne : le reçu Stripe détaille ainsi chaque élément
-// (véhicule + accessoires) au lieu d'un montant agrégé.
-function toStripeLineItems(lines) {
-  return lines.map((line) => ({
-    price_data: {
-      currency: 'gbp',
-      product_data: { name: line.label },
-      unit_amount: Math.round(line.amount * 100),
-    },
-    quantity: 1,
-  }))
-}
-
-async function createCheckoutSession(req, res) {
-  if (!stripe) {
-    return res
-      .status(500)
-      .json({ error: 'Le paiement n’est pas configuré (STRIPE_SECRET_KEY manquant).' })
-  }
-
-  const { cartId } = req.body || {}
-  if (!cartId) {
-    return res.status(400).json({ error: 'cartId est obligatoire.' })
-  }
-
-  const rows = await prisma.$queryRawUnsafe(
-    `SELECT
-       c.id,
-       c.user_id,
-       c.configuration_data AS "configurationData",
-       v.id AS "vehicleId",
-       v.model_name AS "modelName",
-       v.variant_label AS "variantLabel",
-       v.base_price::float8 AS "basePrice"
-     FROM carts c
-     JOIN vehicles v ON v.id = c.vehicle_id
-     WHERE c.id = $1 AND c.user_id = $2 AND c.is_validated = false AND c.deleted_at IS NULL`,
-    cartId,
-    req.user.id,
-  )
-  const cart = rows[0]
-  if (!cart) {
-    return res.status(404).json({ error: 'Panier introuvable.' })
-  }
-  if (cart.basePrice == null) {
-    return res
-      .status(400)
-      .json({ error: 'This vehicle is not yet available for online purchase.' })
-  }
-
-  // Les accessoires sont RECHARGÉS DEPUIS LA BASE : le client ne fournit que des
-  // ids, jamais un prix. Id inconnu, supprimé, ou rupturé => refus.
-  const accessoryIds = cart.configurationData?.accessoryIds
-  const { items, missing } = await accessoryService.resolveAccessories(accessoryIds)
-  const outOfStock = items.filter((item) => !item.inStock)
-
-  if (missing.length > 0 || outOfStock.length > 0) {
-    return res
-      .status(400)
-      .json({ error: 'One of your selected accessories is no longer available.' })
-  }
-
-  // Les accessoires ne sont valides que sur les véhicules auxquels ils sont
-  // rattachés (table vehicle_accessories) : un id existant mais non proposé sur
-  // ce véhicule (panier bricolé) est refusé.
-  const unassigned = await accessoryService.findUnassignedAccessoryIds(
-    cart.vehicleId,
-    accessoryIds,
-  )
-  if (unassigned.length > 0) {
-    return res
-      .status(400)
-      .json({ error: 'One of your selected accessories is not available for this vehicle.' })
-  }
-
-  const lines = [
-    vehicleLine(cart),
-    ...items.map((item) => ({ label: item.name, amount: Number(item.price) })),
-  ]
-  const amount = Math.round(lines.reduce((sum, line) => sum + line.amount, 0) * 100) / 100
-
-  const order = await prisma.orders.create({
-    data: {
-      user_id: req.user.id,
-      vehicle_id: cart.vehicleId,
-      cart_id: cart.id,
-      amount,
-      currency: 'GBP',
-      status: 'pending',
-    },
-    select: { id: true },
-  })
-  const orderId = order.id
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: toStripeLineItems(lines),
-    success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/cart`,
-    metadata: { orderId },
-  })
-
-  await prisma.orders.update({
-    where: { id: orderId },
-    data: { stripe_checkout_session_id: session.id },
-  })
-
-  return res.json({ url: session.url })
-}
 
 function verifyWebhookSignature(rawBody, signature) {
   if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -171,6 +52,58 @@ async function decrementAccessoryStock(order) {
   }
 }
 
+// Marque l'offre liée comme acceptée et bascule la demande en 'converted'.
+// UPDATE ... WHERE status='active' RETURNING : idempotent (un rejeu ne retourne
+// aucune ligne et ne reconvertit donc pas la demande).
+async function markOfferPaid(offerId, orderId) {
+  const rows = await prisma.$queryRawUnsafe(
+    `WITH updated AS (
+       UPDATE offers
+          SET status = 'accepted', accepted_at = now(), paid_order_id = $1, updated_at = now()
+        WHERE id = $2 AND status = 'active'
+        RETURNING request_id
+     )
+     SELECT * FROM updated`,
+    orderId,
+    offerId,
+  )
+  const row = rows[0]
+  if (!row) return false
+  await prisma.configuration_requests.updateMany({
+    where: { id: row.request_id },
+    data: { status: 'converted', updated_at: new Date() },
+  })
+  return true
+}
+
+// Décrémente le stock des accessoires d'une commande issue d'une offre. Les
+// ids proviennent du décompte FIGÉ (price_breakdown), pas d'un panier.
+async function decrementOfferStock(order) {
+  const lines = order.price_breakdown?.lines
+  if (!Array.isArray(lines)) return
+  const accessoryIds = lines
+    .filter((line) => line.kind === 'accessory' && line.refId)
+    .map((line) => line.refId)
+
+  for (const accessoryId of accessoryIds) {
+    try {
+      const updated = await accessoryService.decrementStock(accessoryId)
+      if (updated && updated.stockQuantity === 0) {
+        notify({
+          type: 'low_stock',
+          message: `${updated.name} is now out of stock.`,
+          relatedId: accessoryId,
+        })
+      }
+    } catch (err) {
+      console.error(
+        `[webhook] décrément stock impossible pour l'accessoire ${accessoryId} :`,
+        err.message,
+      )
+    }
+  }
+}
+
 async function handleCheckoutCompleted(session) {
   const orderId = session.metadata?.orderId
   if (!orderId) {
@@ -200,9 +133,16 @@ async function handleCheckoutCompleted(session) {
   if (order.cart_id) {
     await prisma.carts.updateMany({ where: { id: order.cart_id }, data: { is_validated: true } })
   }
+  if (order.offer_id) {
+    await markOfferPaid(order.offer_id, order.id)
+  }
 
   // Après le marquage « paid » : on décrémente le stock des accessoires.
-  await decrementAccessoryStock(order)
+  if (order.cart_id) {
+    await decrementAccessoryStock(order)
+  } else if (order.offer_id) {
+    await decrementOfferStock(order)
+  }
 
   notify({
     type: 'new_order',
@@ -210,9 +150,17 @@ async function handleCheckoutCompleted(session) {
     relatedId: order.id,
   })
 
-  sendOrderReceipt(order.id).catch((err) =>
-    console.error('[receipt] échec envoi pour order', order.id, err),
-  )
+  // Reçu d'offre : envoyé de façon awaitée (décompte détaillé exigé). Reçu
+  // panier : en tâche de fond, comportement historique.
+  if (order.offer_id) {
+    try {
+      await sendOrderReceipt(order.id)
+    } catch (err) {
+      console.error('[webhook] échec envoi reçu offre :', err.message)
+    }
+  } else {
+    background(sendOrderReceipt(order.id))
+  }
 }
 
 async function handleChargeRefunded(charge) {
@@ -257,7 +205,6 @@ async function handleCheckoutExpired(session) {
 }
 
 module.exports = {
-  createCheckoutSession,
   verifyWebhookSignature,
   handleCheckoutCompleted,
   handleCheckoutExpired,

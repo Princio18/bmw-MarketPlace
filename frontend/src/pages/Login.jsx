@@ -53,6 +53,13 @@ function Login() {
   // Bandeau d'information distinct de l'erreur de mot de passe : affiché
   // dans les deux étapes du formulaire, jamais en rouge.
   const sessionExpired = searchParams.get('reason') === 'session_expired'
+  // Cible de retour après connexion (ex. « Save and Confirm » déconnecté).
+  // On n'accepte qu'un chemin interne : « /… » mais pas « //… » (open-redirect).
+  const redirectParam = searchParams.get('redirect')
+  const safeRedirect =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+      ? redirectParam
+      : null
 
   const [step, setStep] = useState('identifier') // 'identifier' | 'password'
   const [bmwId, setBmwId] = useState('')
@@ -97,10 +104,13 @@ function Login() {
         return
       }
       login(data.token, keepLoggedIn, data.user)
-      navigate(
-        from || (data.user.role === 'admin' ? '/admin' : '/'),
-        { replace: true },
-      )
+      // L'admin suit son flux habituel ; le client revient à sa cible
+      // (redirect sûre, sinon l'état « from », sinon l'accueil).
+      const target =
+        data.user.role === 'admin'
+          ? from || '/admin'
+          : safeRedirect || from || '/'
+      navigate(target, { replace: true })
     } catch (err) {
       setError(getErrorMessage(err, t('pages.login.errors.incorrect')))
     }

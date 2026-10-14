@@ -15,6 +15,7 @@ function PriceOverviewModal({
   basePrice,
   accessories,
   selectedIds,
+  optionalEquipmentTotal = 0,
   locale,
   onClose,
 }) {
@@ -25,10 +26,9 @@ function PriceOverviewModal({
     const selected = (Array.isArray(accessories) ? accessories : []).filter(
       (item) => ids.includes(item.id) && item.inStock,
     )
-    const optionsTotal = selected.reduce(
-      (sum, option) => sum + (Number(option.price) || 0),
-      0,
-    )
+    const optionsTotal =
+      selected.reduce((sum, option) => sum + (Number(option.price) || 0), 0) +
+      (Number(optionalEquipmentTotal) || 0)
     const otrFee = Number(specs?.onTheRoadFee) || 0
     const rate = Number(specs?.vatRate) || 0
     const netBase = rate > 0 ? Math.round(basePrice / (1 + rate)) : basePrice
@@ -42,7 +42,7 @@ function PriceOverviewModal({
       { key: 'otrFee', label: 'otrFee', amount: otrFee },
       { key: 'total', label: 'total', amount: total, strong: true },
     ]
-  }, [basePrice, specs, accessories, selectedIds])
+  }, [basePrice, specs, accessories, selectedIds, optionalEquipmentTotal])
 
   return (
     <Modal

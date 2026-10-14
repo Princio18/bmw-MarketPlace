@@ -16,6 +16,7 @@
     "seed:vehicles": "node scripts/seedVehicles.js",
     "seed:accessories": "node scripts/seedAccessories.js",
     "seed:configurator-specs": "node scripts/seedConfiguratorSpecs.js",
+    "seed:dealers": "node scripts/seedDealers.js",
     "db:seed": "npm run seed:roles && npm run seed:admin && npm run seed:vehicles && npm run seed:accessories && npm run seed:configurator-specs",
     "postinstall": "prisma generate"
   },
@@ -23,6 +24,7 @@
     "@aws-sdk/client-s3": "^3.1145.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@vercel/functions": "^3.10.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

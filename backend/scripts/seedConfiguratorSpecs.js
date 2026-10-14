@@ -24,6 +24,49 @@ function resolveSlug(vehicle) {
   return map[name] || null
 }
 
+// Équipement en option (« Optional Equipment ») : vit dans les specs du
+// véhicule (clé `optionalEquipment`), DISTINCT des accessoires en base (table
+// `accessories`). Sélection multiple via `optionalEquipmentIds` côté client.
+// Prix TTC, cohérents avec la convention du configurateur (TVA incluse).
+const OPTIONAL_EQUIPMENT = [
+  {
+    id: 'driving-assistant-professional',
+    name: 'Driving Assistant Professional',
+    price: 1950,
+    description: 'Extended assistance for comfortable and safe driving.',
+  },
+  {
+    id: 'parking-assistant-plus',
+    name: 'Parking Assistant Plus',
+    price: 850,
+    description: 'Automated parking and manoeuvring aids.',
+  },
+  {
+    id: 'harman-kardon-surround',
+    name: 'Harman Kardon Surround Sound System',
+    price: 895,
+    description: 'High-fidelity surround sound with 16 speakers.',
+  },
+  {
+    id: 'panoramic-glass-roof',
+    name: 'Panoramic Glass Sunroof',
+    price: 1500,
+    description: 'Electrically operated panoramic glass roof.',
+  },
+  {
+    id: 'comfort-seats-front',
+    name: 'Comfort seats, front',
+    price: 1250,
+    description: 'Electrically adjustable comfort seats with memory.',
+  },
+  {
+    id: 'travel-comfort-system',
+    name: 'Travel & Comfort System',
+    price: 295,
+    description: 'Flexible mounting system for rear passengers.',
+  },
+]
+
 // Specs du configurateur ("Build & Price"). Injectées sur un véhicule
 // électrique déjà seedé pour alimenter la page /configure/:vehicleId.
 // La forme de ce JSON est volontairement figée par le frontend.
@@ -290,6 +333,7 @@ const CONFIGURATOR_SPECS = {
     },
   ],
   charging: [],
+  optionalEquipment: OPTIONAL_EQUIPMENT,
   financeOptions: [
     {
       id: 'pch',
@@ -353,7 +397,7 @@ async function run() {
     `[seed:configurator-specs] ${CONFIGURATOR_SPECS.models.length} modèle(s), ${CONFIGURATOR_SPECS.financeOptions.length} option(s) de financement.`,
   )
   console.log(
-    `[seed:configurator-specs] Options : ${CONFIGURATOR_SPECS.engines.length} moteur(s), ${CONFIGURATOR_SPECS.exteriorColours.length} couleur(s), ${CONFIGURATOR_SPECS.alloyWheels.length} jante(s), ${CONFIGURATOR_SPECS.upholstery.length} sellerie(s).`,
+    `[seed:configurator-specs] Options : ${CONFIGURATOR_SPECS.engines.length} moteur(s), ${CONFIGURATOR_SPECS.exteriorColours.length} couleur(s), ${CONFIGURATOR_SPECS.alloyWheels.length} jante(s), ${CONFIGURATOR_SPECS.upholstery.length} sellerie(s), ${OPTIONAL_EQUIPMENT.length} équipement(s) en option.`,
   )
   console.log(
     '[seed:configurator-specs] Les accessoires ne sont PAS dans ces specs : ils vivent en base (table accessories) et sont lus via GET /api/accessories.',
@@ -387,15 +431,19 @@ async function run() {
       `UPDATE vehicles SET specs =
          jsonb_set(
            jsonb_set(
-             jsonb_set(COALESCE(specs, '{}'::jsonb), '{technicalData}', $1::jsonb, true),
-             '{keySpecs}', $2::jsonb, true
+             jsonb_set(
+               jsonb_set(COALESCE(specs, '{}'::jsonb), '{technicalData}', $1::jsonb, true),
+               '{keySpecs}', $2::jsonb, true
+             ),
+             '{engines}', $3::jsonb, true
            ),
-           '{engines}', $3::jsonb, true
+           '{optionalEquipment}', $4::jsonb, true
          )
-       WHERE id = $4`,
+       WHERE id = $5`,
       JSON.stringify(specTech),
       JSON.stringify(keySpecs),
       JSON.stringify(engines),
+      JSON.stringify(OPTIONAL_EQUIPMENT),
       vehicle.id,
     )
     updated += 1

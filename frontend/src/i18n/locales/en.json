@@ -1,4 +1,71 @@
 {
+  "confirmRequest": {
+    "title": "Thank you for your request",
+    "intro": "A member of BMW or your BMW Retailer will be in contact shortly. To give you the very best experience, please add or update your phone number and preferred BMW Retailer. Otherwise the details we have stored will be used to process your request.",
+    "loadingVehicle": "Loading vehicle…",
+    "vehicleMissing": "We could not load this vehicle's details.",
+    "salutation": "Salutation",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "contactHow": "Please select how you would like to be contacted:",
+    "contactOption": {
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "email": "E-Mail",
+    "phone": "Phone Number",
+    "preferredCentre": "Please select your preferred BMW Centre.",
+    "selectedCentre": "Selected: {{name}} ({{city}})",
+    "selectedCentreConfirmed": "Selected",
+    "selectCentre": "Select this centre",
+    "postcodePlaceholder": "Postcode, address or place",
+    "searchRetailerPlaceholder": "Search for Retailer",
+    "dealersLoading": "Loading BMW Centres…",
+    "dealersError": "Unable to load BMW Centres. Please try again.",
+    "retry": "Try again",
+    "marketingTitle": "Stay up-to-date on products and services from BMW Group.",
+    "marketingIntro": "Tell us how you would like to hear from us. You can share this information with the BMW retailer and receive useful information about the BMW group and its products and services, user events, and news.",
+    "marketingOptions": {
+      "apps": "Apps of the BMW Group",
+      "email": "Email",
+      "phone": "Phone",
+      "sms": "SMS (Messenger Services)",
+      "in_car": "In-car (if supported)",
+      "mail": "Mail"
+    },
+    "marketingInfo": "You can change these preferences later from your account settings.",
+    "marketingWithdraw": "You can withdraw your consent at any time.",
+    "benefitsTitle": "MY BENEFITS",
+    "benefitsIntro": "The benefits of staying in contact with BMW may include:",
+    "benefit1": "News of new products, including new vehicles, features and equipment.",
+    "benefit2": "Invitations to BMW events for owners and enthusiasts.",
+    "benefit3": "Special offers and services from BMW and your local BMW Retailer.",
+    "benefit4": "Information on vehicle safety and vehicle recalls.",
+    "updateDetails": "Update details",
+    "pleaseWait": "Submitting…",
+    "loading": "Loading your request…",
+    "updated": "Your details have been updated. Thank you!",
+    "viewMyRequests": "View my requests",
+    "emailReadonlyHint": "To change it, update your account.",
+    "submitSuccess": "Thank you! Your request has been submitted.",
+    "privacyBefore": "The BMW Retailer or BMW UK will contact you by telephone or email. Information on the processing of your data can be found in the ",
+    "privacyBmwLink": "BMW Privacy Policy",
+    "privacyMid": " and the ",
+    "privacyRetailerLink": "BMW Retailer's Privacy Policy",
+    "privacyAfter": ", which can be viewed on their website. If you have opted in to receive marketing communications, you may also be contacted about the vehicles saved in your wish list.",
+    "errors": {
+      "firstNameRequired": "Please enter your first name.",
+      "firstNameInvalid": "Your first name can only contain letters, spaces, hyphens, periods and apostrophes.",
+      "lastNameRequired": "Please enter your last name.",
+      "lastNameInvalid": "Your last name can only contain letters, spaces, hyphens, periods and apostrophes.",
+      "emailRequired": "Please enter your e-mail address.",
+      "emailInvalid": "Please enter a valid e-mail address.",
+      "phoneRequired": "A phone number is required when you choose to be contacted by phone.",
+      "phoneInvalid": "Please enter a valid phone number (7 to 15 digits).",
+      "centreRequired": "Please select a preferred BMW Centre.",
+      "general": "Something went wrong. Please try again."
+    }
+  },
   "nav": {
     "models": "All Models & Configurator",
     "electric": "Electric",
@@ -59,7 +126,9 @@
     "setResetPassword": "Set / Reset Password",
     "dataPrivacy": "Data Privacy",
     "legalNotice": "Legal Notice",
-    "myOrders": "My orders"
+    "myOrders": "My orders",
+    "myRequests": "My requests",
+    "myConfigurations": "My configurations"
   },
   "account": {
     "welcome": "Welcome to My BMW.",
@@ -221,10 +290,30 @@
     "emptyText": "Discover our range and choose the vehicle for you.",
     "browseModels": "All Models & Configurator",
     "totalPrice": "Total price",
-    "payNow": "Pay now",
+    "requestOffer": "Request an offer",
+    "requestingOffer": "Sending your request…",
+    "requestOfferError": "Unable to send your request. Please try again.",
+    "disabledPrice": "Price on request — contact us"
+  },
+  "offer": {
+    "loading": "Loading your offer…",
+    "error": "Unable to load this offer.",
+    "title": "Your personalised offer",
+    "forVehicle": "Offer for your {{model}}",
+    "lines": "Breakdown",
+    "total": "Total",
+    "delivery": "Estimated delivery: {{min}}–{{max}} weeks.",
+    "deliveryFrom": "Estimated delivery: from {{min}} weeks.",
+    "deliveryUpTo": "Estimated delivery: up to {{max}} weeks.",
+    "validUntil": "Valid until {{date}}",
+    "notes": "Notes from our team",
+    "acceptTerms": "I accept the terms and conditions of this offer.",
+    "pay": "Accept and pay",
     "paying": "Redirecting to payment…",
     "payError": "Unable to start the payment. Please try again.",
-    "disabledPrice": "Price on request — contact us"
+    "unavailable": "This offer is no longer available.",
+    "statusAccepted": "This offer has already been accepted.",
+    "backToRequests": "Back to my requests"
   },
   "orderConfirmation": {
     "title": "Thank you for your purchase!",
@@ -390,6 +479,34 @@
       "processingCancelled": "Cancelled"
     }
   },
+  "myRequests": {
+    "title": "My requests",
+    "loading": "Loading your requests…",
+    "error": "Unable to load your requests. Please try again.",
+    "empty": "You don't have any configuration requests yet.",
+    "reference": "Reference",
+    "date": "Date",
+    "dealer": "BMW Centre",
+    "editDetails": "Edit details",
+    "status": {
+      "new": "Received",
+      "contacted": "We've been in touch",
+      "offer_sent": "Offer available",
+      "converted": "Order placed",
+      "closed": "Closed"
+    }
+  },
+  "myConfigurations": {
+    "title": "My configurations",
+    "loading": "Loading your configurations…",
+    "error": "Unable to load your configurations. Please try again.",
+    "empty": "You don't have any saved configurations yet.",
+    "savedOn": "Saved on",
+    "open": "Open",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete configuration",
+    "deleteConfirmMessage": "This saved configuration will be removed. This action cannot be undone."
+  },
   "configure": {
     "loading": "Loading configuration…",
     "notFound": "Vehicle not found",
@@ -416,6 +533,7 @@
       "exteriorColours": "Exterior Colour",
       "alloyWheels": "Alloy Wheels",
       "optionalEquipment": "Optional Equipment",
+      "accessories": "Accessories",
       "charging": "Charging",
       "summary": "Summary"
     },
@@ -456,6 +574,12 @@
       "count": "{{count}} selected",
       "includedInTotal": "Included in the total price",
       "want": "Want",
+      "added": "Added ✓"
+    },
+    "optionalEquipment": {
+      "count": "{{count}} selected",
+      "includedInTotal": "Included in the total price",
+      "want": "Add",
       "added": "Added ✓"
     },
     "steps": {
@@ -589,7 +713,11 @@
       "and": "and",
       "centrePolicy": "BMW Centre's Privacy Policy",
       "saveOnly": "Save only",
-      "saveAndConfirm": "Save and Confirm"
+      "saveAndConfirm": "Save and Confirm",
+      "savedToast": "Configuration saved to My configurations",
+      "errors": {
+        "generic": "Something went wrong. Please try again."
+      }
     }
   }
 }

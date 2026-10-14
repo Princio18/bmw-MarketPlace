@@ -1,5 +1,6 @@
 const { signAccessToken } = require('../auth/tokens')
 const { sendLoginAlertEmail } = require('./loginAlertEmail')
+const { background } = require('../utils/background')
 const { prisma } = require('../db')
 const geoip = require('geoip-lite')
 const UAParser = require('ua-parser-js')
@@ -66,9 +67,7 @@ async function finalizeLogin(user, req, opts = {}) {
           last_location: location,
         },
       })
-      sendLoginAlertEmail({ to: user.email, device, location, loginDate }).catch(
-        (err) => console.error('[login-alert] échec envoi email:', err),
-      )
+      background(sendLoginAlertEmail({ to: user.email, device, location, loginDate }))
     } else {
       await prisma.known_devices.updateMany({
         where: { user_id: user.id, device_id: finalDeviceId },

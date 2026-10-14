@@ -103,6 +103,7 @@ function Dashboard() {
         { label: t('dashboard.revenueThisMonth'), value: formatPrice(summary.revenueThisMonth, 'en-GB') },
         { label: t('dashboard.ordersThisMonth'), value: Number(summary.ordersThisMonth).toLocaleString(lang) },
         { label: t('dashboard.newClientsThisMonth'), value: Number(summary.newClientsThisMonth).toLocaleString(lang) },
+        { label: t('dashboard.newRequests'), value: Number(summary.newRequestsCount).toLocaleString(lang) },
         { label: t('dashboard.activeVehicles'), value: Number(summary.activeVehiclesCount).toLocaleString(lang) },
       ]
     : []
@@ -122,7 +123,7 @@ function Dashboard() {
       {summaryError ? (
         <p className="text-sm text-red-600 dark:text-red-400">{t('common.error')}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {kpis.map((kpi) => (
             <KpiCard key={kpi.label} label={kpi.label} value={kpi.value} />
           ))}

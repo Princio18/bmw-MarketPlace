@@ -89,7 +89,7 @@ function AccessoryCard({ accessory, isSelected, onToggle, locale }) {
 
 function AccessoriesSection({ accessories, selectedIds, onToggle, locale }) {
   const { t } = useTranslation()
-  const title = t('configure.tabs.optionalEquipment')
+  const title = t('configure.tabs.accessories')
 
   if (!Array.isArray(accessories) || accessories.length === 0) {
     return <SectionEmpty title={title} message={t('configure.section.empty')} />

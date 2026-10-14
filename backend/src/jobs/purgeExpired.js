@@ -18,6 +18,11 @@ async function purgeExpiredRows() {
   })
   report.push(`vehicles : ${r2.count}`)
 
+  const rSaved = await prisma.saved_configurations.deleteMany({
+    where: { deleted_at: { not: null, lt: cutoff } },
+  })
+  report.push(`saved_configurations : ${rSaved.count}`)
+
   const r2fa = await prisma.admin_email_otps.deleteMany({
     where: { expires_at: { lt: new Date() } },
   })

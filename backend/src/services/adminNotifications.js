@@ -1,18 +1,23 @@
 const { prisma } = require('../db')
+const { background } = require('../utils/background')
 
-// Insertion fire-and-forget : ne doit JAMAIS bloquer la requête principale.
-function notify({ type, message, relatedId = null }) {
-  prisma.admin_notifications
-    .create({
+// Insertion d'une notification admin. Toujours déclenchée en arrière-plan :
+// ne doit JAMAIS bloquer la requête principale ni retarder la réponse HTTP.
+function createAdminNotification(type, message, relatedId = null) {
+  return background(
+    prisma.admin_notifications.create({
       data: {
         type,
         message,
         related_id: relatedId,
       },
-    })
-    .catch((err) =>
-      console.error(`[notify] échec insertion notification (${type}) :`, err.message),
-    )
+    }),
+  )
 }
 
-module.exports = { notify }
+// Nom historique conservé pour les appels existants : délègue au nom canonique.
+function notify({ type, message, relatedId = null }) {
+  return createAdminNotification(type, message, relatedId)
+}
+
+module.exports = { createAdminNotification, notify }

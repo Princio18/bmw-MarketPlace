@@ -16,13 +16,17 @@ import FindBmwCentre from './pages/FindBmwCentre'
 import AllModels from './pages/AllModels'
 import VehicleDetail from './pages/VehicleDetail'
 import Configure from './pages/Configure'
+import ConfigurationRequestConfirmation from './pages/ConfigurationRequestConfirmation'
 import Cart from './pages/Cart'
+import OfferDetail from './pages/OfferDetail'
 import OrderConfirmation from './pages/OrderConfirmation'
 import AdminOtp from './pages/AdminOtp'
 import AdminLayout from './layouts/AdminLayout'
 import Dashboard from './pages/admin/Dashboard'
 import Clients from './pages/admin/Clients'
 import Orders from './pages/admin/Orders'
+import Requests from './pages/admin/Requests'
+import RequestDetail from './pages/admin/RequestDetail'
 import Payment from './pages/admin/Payment'
 import Vehicles from './pages/admin/Vehicles'
 import VehicleFormPage from './pages/admin/VehicleFormPage'
@@ -31,6 +35,8 @@ import AccessoryFormPage from './pages/admin/AccessoryFormPage'
 import Reports from './pages/admin/Reports'
 import Settings from './pages/admin/Settings'
 import MyOrders from './pages/MyOrders'
+import MyRequests from './pages/MyRequests'
+import MyConfigurations from './pages/MyConfigurations'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { useIdleLogout } from './hooks/useIdleLogout'
 
@@ -62,6 +68,14 @@ function App() {
       />
       <Route path="/order-confirmation" element={<OrderConfirmation />} />
       <Route
+        path="/configure/:vehicleId/confirm-request"
+        element={
+          <ProtectedRoute>
+            <ConfigurationRequestConfirmation />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/configure/:vehicleId"
         element={
           <ProtectedRoute allowedRoles={['client', 'admin']}>
@@ -78,10 +92,34 @@ function App() {
         }
       />
       <Route
+        path="/my-requests"
+        element={
+          <ProtectedRoute allowedRoles={['client', 'admin']}>
+            <MyRequests />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-configurations"
+        element={
+          <ProtectedRoute allowedRoles={['client', 'admin']}>
+            <MyConfigurations />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/cart"
         element={
           <ProtectedRoute allowedRoles={['client', 'admin']}>
             <Cart />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/offers/:id"
+        element={
+          <ProtectedRoute allowedRoles={['client', 'admin']}>
+            <OfferDetail />
           </ProtectedRoute>
         }
       />
@@ -98,6 +136,8 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="requests" element={<Requests />} />
+        <Route path="requests/:id" element={<RequestDetail />} />
         <Route path="payment" element={<Payment />} />
         <Route path="vehicles" element={<Vehicles />} />
         <Route path="vehicles/new" element={<VehicleFormPage />} />

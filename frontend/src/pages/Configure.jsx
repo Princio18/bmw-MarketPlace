@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import api from '../services/api'
 import { getAuthToken } from '../lib/authToken'
@@ -11,6 +11,7 @@ import EnginesSection from '../components/configure/sections/EnginesSection'
 import ExteriorColourSection from '../components/configure/sections/ExteriorColourSection'
 import FinanceModal from '../components/configure/modals/FinanceModal'
 import AccessoriesSection from '../components/configure/sections/AccessoriesSection'
+import OptionalEquipmentSection from '../components/configure/sections/OptionalEquipmentSection'
 import LoadingSpinner3D from '../components/configure/LoadingSpinner3D'
 import OptionSection from '../components/configure/OptionSection'
 import PriceOverviewModal from '../components/configure/modals/PriceOverviewModal'
@@ -30,6 +31,7 @@ const TABS = [
   'exteriorColours',
   'alloyWheels',
   'optionalEquipment',
+  'accessories',
   'charging',
   'summary',
 ]
@@ -39,7 +41,8 @@ const DEDICATED_SECTIONS = {
   engines: EnginesSection,
   exteriorColours: ExteriorColourSection,
   alloyWheels: AlloyWheelsSection,
-  optionalEquipment: AccessoriesSection,
+  optionalEquipment: OptionalEquipmentSection,
+  accessories: AccessoriesSection,
 }
 
 // Chaque onglet mono-sélection maps vers UNE clé de selectedOptions : une
@@ -56,6 +59,7 @@ const EMPTY_SELECTION = {
   engineId: null,
   exteriorColourId: null,
   alloyWheelId: null,
+  optionalEquipmentIds: [],
   accessoryIds: [],
 }
 
@@ -76,6 +80,7 @@ function toList(value) {
 
 function Configure() {
   const { vehicleId } = useParams()
+  const location = useLocation()
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage === 'fr' ? 'fr-FR' : 'en-GB'
   const notAvailable = t('configure.navbar.notAvailable')
@@ -93,10 +98,47 @@ function Configure() {
   // source de vérité unique du montant mensuel : navbar et modale Finance
   // affichent toujours le même produit.
   const [selectedFinanceId, setSelectedFinanceId] = useState(null)
+  // Toast léger maison (aucune dépendance) : confirmation « configuration
+  // enregistrée » après un « Save only » réussi.
+  const [toast, setToast] = useState('')
   const ratiosRef = useRef(new Map())
   // Évite d'écrire un panier « vide » au premier rendu : seul un changement
   // réel de configuration déclenche l'autosave.
   const hasInteractedRef = useRef(false)
+  // La configuration restaurée (depuis « My configurations » ou après connexion)
+  // ne doit s'appliquer qu'une seule fois.
+  const restoredRef = useRef(false)
+
+  // Restauration de configuration : soit passée dans l'état de navigation
+  // (bouton « Open » des configurations sauvegardées), soit mise en attente en
+  // sessionStorage avant un « Save and Confirm » qui a mené à la connexion.
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+
+    let restored = location.state?.restoreOptions ?? null
+    if (!restored) {
+      const key = `pendingConfig:${vehicleId}`
+      const raw = sessionStorage.getItem(key)
+      if (raw) {
+        sessionStorage.removeItem(key)
+        try {
+          restored = JSON.parse(raw)
+        } catch {
+          restored = null
+        }
+      }
+    }
+
+    if (restored && typeof restored === 'object') {
+      setSelectedOptions({
+        ...EMPTY_SELECTION,
+        ...restored,
+        optionalEquipmentIds: toList(restored.optionalEquipmentIds),
+        accessoryIds: toList(restored.accessoryIds),
+      })
+    }
+  }, [vehicleId, location.state])
 
   useEffect(() => {
     let cancelled = false
@@ -181,6 +223,15 @@ function Configure() {
     [selectedAccessories],
   )
 
+  // Options d'équipement des specs (`optionalEquipmentIds`) : contrairement aux
+  // accessoires, elles n'ont pas de stock. Sélection multiple.
+  const optionalEquipmentTotal = useMemo(() => {
+    const ids = toList(selectedOptions.optionalEquipmentIds)
+    return toList(specs?.optionalEquipment)
+      .filter((item) => ids.includes(item.id))
+      .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+  }, [specs?.optionalEquipment, selectedOptions.optionalEquipmentIds])
+
   // Prix du véhicule seul (hors accessoires) : PriceOverviewModal s'occupe
   // lui-même d'ajouter les accessoires et la TVA, il ne faut donc PAS lui
   // passer un total déjà majoré, sinon la ligne « Options » est comptée deux fois.
@@ -195,8 +246,8 @@ function Configure() {
   // recalculé par le serveur à la création de la session de paiement.
   const totalPrice = useMemo(() => {
     if (vehicleBasePrice == null) return null
-    return vehicleBasePrice + accessoriesTotal
-  }, [vehicleBasePrice, accessoriesTotal])
+    return vehicleBasePrice + accessoriesTotal + optionalEquipmentTotal
+  }, [vehicleBasePrice, accessoriesTotal, optionalEquipmentTotal])
 
   // Couleur de carrosserie peinte dans la vue 360° : on répercute le swatch de
   // la teinte sélectionnée. Résolu ici plutôt que dans la vue, qui ne connaît
@@ -304,6 +355,18 @@ function Configure() {
     })
   }, [])
 
+  const handleToggleOptionalEquipment = useCallback((id) => {
+    setSelectedOptions((prev) => {
+      const current = toList(prev.optionalEquipmentIds)
+      return {
+        ...prev,
+        optionalEquipmentIds: current.includes(id)
+          ? current.filter((item) => item !== id)
+          : [...current, id],
+      }
+    })
+  }, [])
+
   const handleTabSelect = useCallback((tab) => {
     setActiveTab(tab)
     document
@@ -322,12 +385,20 @@ function Configure() {
   // fermer l'une n'affecte l'état d'aucune autre.
   const closeModal = useCallback(() => setOpenModal(null), [])
 
+  // Le toast disparaît tout seul au bout de 3 s.
+  useEffect(() => {
+    if (!toast) return undefined
+    const timer = setTimeout(() => setToast(''), 3000)
+    return () => clearTimeout(timer)
+  }, [toast])
+
   const activeIndex = Math.max(tabs.indexOf(activeTab), 0)
   const consumption = specs?.technicalData?.consumption
 
   const renderSection = (tab) => {
     const Dedicated = DEDICATED_SECTIONS[tab]
     if (Dedicated) {
+      const isOptionalEquipment = tab === 'optionalEquipment'
       return (
         <Dedicated
           specs={specs}
@@ -335,10 +406,14 @@ function Configure() {
           selectedId={
             TAB_OPTION_KEY[tab] ? selectedOptions[TAB_OPTION_KEY[tab]] : undefined
           }
-          selectedIds={selectedOptions.accessoryIds}
+          selectedIds={
+            isOptionalEquipment
+              ? selectedOptions.optionalEquipmentIds
+              : selectedOptions.accessoryIds
+          }
           accessories={accessories}
           onSelect={(id) => handleSelect(tab, id)}
-          onToggle={handleToggleAccessory}
+          onToggle={isOptionalEquipment ? handleToggleOptionalEquipment : handleToggleAccessory}
         />
       )
     }
@@ -493,14 +568,26 @@ function Configure() {
         basePrice={vehicleBasePrice ?? 0}
         accessories={accessories}
         selectedIds={selectedOptions.accessoryIds}
+        optionalEquipmentTotal={optionalEquipmentTotal}
         locale={locale}
         onClose={closeModal}
       />
       <SaveConfigurationModal
         open={openModal === 'saveConfiguration'}
         vehicle={vehicle}
+        selectedOptions={selectedOptions}
         onClose={closeModal}
+        onSaved={setToast}
       />
+
+      {toast && (
+        <div
+          role="status"
+          className="fixed left-1/2 top-6 z-50 -translate-x-1/2 rounded-sm bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-lg"
+        >
+          {toast}
+        </div>
+      )}
 
       {show3D && (
         <Suspense

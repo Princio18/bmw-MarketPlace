@@ -16,6 +16,7 @@ const {
 } = require('../auth/activation')
 const { buildActivationLink, sendActivationEmail } = require('../services/activationEmail')
 const { notify } = require('../services/adminNotifications')
+const { background } = require('../utils/background')
 const { ROLES } = require('../roles')
 const { prisma } = require('../db')
 const { isValidEmail, validatePassword } = require('../auth/validation')
@@ -66,9 +67,7 @@ async function register(req, res) {
     })
 
     const activationLink = buildActivationLink(activationToken)
-    sendActivationEmail({ to: email.trim(), activationLink }).catch((err) =>
-      console.error(`[activation] échec envoi email à ${email.trim()} :`, err),
-    )
+    background(sendActivationEmail({ to: email.trim(), activationLink }))
 
     if (process.env.ACTIVATION_DEV_MODE !== 'false') {
       console.log(`[activation] ${activationLink}`)
@@ -142,9 +141,7 @@ async function resendActivation(req, res) {
   })
 
   const activationLink = buildActivationLink(activationToken)
-  sendActivationEmail({ to: user.email, activationLink }).catch((err) =>
-    console.error(`[activation] échec renvoi email à ${user.email} :`, err),
-  )
+  background(sendActivationEmail({ to: user.email, activationLink }))
 
   return res.json({ sent: true, maskedEmail: maskEmail(user.email) })
 }
@@ -189,9 +186,7 @@ async function issueAdminOtp(user) {
       expires_at: new Date(Date.now() + 10 * 60 * 1000),
     },
   })
-  sendAdminOtpEmail({ to: user.email, code }).catch((err) =>
-    console.error('[admin-otp] échec envoi email:', err),
-  )
+  background(sendAdminOtpEmail({ to: user.email, code }))
   return maskEmail(user.email)
 }
 

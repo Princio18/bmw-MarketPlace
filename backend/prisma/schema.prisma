@@ -47,6 +47,11 @@ model users {
   reviews           reviews[]
   favorites         favorites[]
   admin_permissions admin_permissions?
+  configuration_requests configuration_requests[] @relation("configuration_request_owner")
+  configuration_requests_handled configuration_requests[] @relation("configuration_request_handled_by")
+  request_messages      request_messages[]
+  saved_configurations saved_configurations[]
+  offers                offers[]             @relation("offers_created_by")
 }
 
 model vehicles {
@@ -77,6 +82,9 @@ model vehicles {
   reviews             reviews[]
   favorites           favorites[]
   vehicle_accessories vehicle_accessories[]
+  configuration_requests configuration_requests[]
+  saved_configurations saved_configurations[]
+  offers              offers[]
 }
 
 model accessories {
@@ -176,12 +184,15 @@ model orders {
   refunded_at                DateTime? @db.Timestamp(6)
   stripe_refund_id           String?
   receipt_sent_at            DateTime? @db.Timestamp(6)
+  offer_id                   String?   @db.Uuid
+  price_breakdown            Json?
   created_at                 DateTime  @default(now()) @db.Timestamp(6)
 
   user    users    @relation(fields: [user_id], references: [id])
   vehicle vehicles @relation(fields: [vehicle_id], references: [id])
   cart    carts?   @relation(fields: [cart_id], references: [id])
   reviews reviews[]
+  offer          offers? @relation("order_offer", fields: [offer_id], references: [id], onDelete: SetNull)
 }
 
 model reviews {
@@ -220,4 +231,116 @@ model admin_permissions {
   updated_at          DateTime @default(now()) @db.Timestamp(6)
 
   user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model dealers {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(150)
+  city      String   @db.VarChar(100)
+  latitude  Decimal  @db.Decimal(9, 6)
+  longitude Decimal  @db.Decimal(9, 6)
+
+  configuration_requests configuration_requests[]
+}
+
+// Demande de configuration « Save and Confirm ». Créée immédiatement par un
+// utilisateur authentifié, puis complétée par la page « Update details » (PUT).
+// Le statut n'est modifié que par un admin / le système, jamais par le client.
+model configuration_requests {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id             String?   @db.Uuid
+  vehicle_id          String    @db.Uuid
+  configuration_data  Json?
+  salutation          String?   @db.VarChar(10)
+  first_name          String?   @db.VarChar(100)
+  last_name           String?   @db.VarChar(100)
+  contact_preference  String    @default("email") @db.VarChar(10)
+  email               String    @db.VarChar(255)
+  phone_country_code  String?   @db.VarChar(5)
+  phone_number        String?   @db.VarChar(30)
+  preferred_dealer_id String?   @db.Uuid
+  marketing_channels  Json?
+  status              String    @default("new") @db.VarChar(20)
+  admin_notes         String?
+  handled_by          String?   @db.Uuid
+  details_confirmed_at DateTime? @db.Timestamp(6)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+  updated_at          DateTime  @default(now()) @db.Timestamp(6)
+
+  user     users?              @relation("configuration_request_owner", fields: [user_id], references: [id], onDelete: SetNull)
+  vehicle  vehicles            @relation(fields: [vehicle_id], references: [id])
+  dealer   dealers?            @relation(fields: [preferred_dealer_id], references: [id], onDelete: SetNull)
+  handler  users?              @relation("configuration_request_handled_by", fields: [handled_by], references: [id], onDelete: SetNull)
+  messages request_messages[]
+  offers   offers[]
+
+  @@index([status], map: "idx_requests_status")
+  @@index([user_id], map: "idx_requests_user")
+}
+
+// Message email envoyé dans le cadre d'une demande de configuration.
+// `sent_by` NULL = message automatique. delivery_status conserve la trace d'un
+// échec d'envoi (l'admin doit pouvoir le constater sans que la ligne disparaisse).
+model request_messages {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  request_id      String    @db.Uuid
+  sent_by         String?   @db.Uuid
+  subject         String
+  body            String
+  delivery_status String    @default("sent") @db.VarChar(10)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+
+  request configuration_requests @relation(fields: [request_id], references: [id], onDelete: Cascade)
+  sender  users?                 @relation(fields: [sent_by], references: [id], onDelete: SetNull)
+
+  @@index([request_id], map: "idx_request_messages_request")
+}
+
+// Configuration sauvegardée par un utilisateur (« Save only »). Suppression
+// douce via deleted_at ; purgée après 90 jours comme les autres données RGPD.
+model saved_configurations {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String    @db.Uuid
+  vehicle_id         String    @db.Uuid
+  configuration_data Json
+  created_at         DateTime  @default(now()) @db.Timestamp(6)
+  deleted_at         DateTime? @db.Timestamp(6)
+
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vehicle vehicles @relation(fields: [vehicle_id], references: [id])
+
+  @@index([user_id], map: "idx_saved_configurations_user")
+}
+
+// Offre personnalisée émise par un admin sur une demande de configuration.
+// `price_breakdown` fige le décompte (convention TVA incluse) ; `total_amount`
+// en est le total. Au plus une offre 'active' par demande (index partiel).
+model offers {
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  request_id                 String    @db.Uuid
+  vehicle_id                 String    @db.Uuid
+  created_by                 String?   @db.Uuid
+  status                     String    @default("active") @db.VarChar(20)
+  currency                   String    @default("GBP") @db.VarChar(3)
+  total_amount               Decimal   @db.Decimal(10, 2)
+  price_breakdown            Json
+  delivery_weeks_min         Int?
+  delivery_weeks_max         Int?
+  notes                      String?
+  terms_version              String?   @db.VarChar(20)
+  stripe_checkout_session_id String?
+  paid_order_id              String?   @db.Uuid
+  expires_at                 DateTime? @db.Timestamptz(6)
+  accepted_at                DateTime? @db.Timestamptz(6)
+  created_at                 DateTime  @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime  @default(now()) @db.Timestamptz(6)
+
+  request    configuration_requests @relation(fields: [request_id], references: [id], onDelete: Cascade)
+  vehicle    vehicles               @relation(fields: [vehicle_id], references: [id])
+  creator    users?                 @relation("offers_created_by", fields: [created_by], references: [id], onDelete: SetNull)
+  orders     orders[]               @relation("order_offer")
+
+  @@index([request_id], map: "idx_offers_request")
+  @@index([status], map: "idx_offers_status")
+  @@index([vehicle_id])
 }

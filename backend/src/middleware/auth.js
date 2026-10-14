@@ -41,4 +41,26 @@ function requireRole(...roles) {
   }
 }
 
-module.exports = { authenticate, requireRole }
+// Comme authenticate, mais ne rejette jamais un visiteur : si le token est
+// absent/invalide, on poursuit sans req.user (requête anonyme légitime).
+// Utile pour les routes publiques qui relient la personne si connectée.
+async function optionalAuthenticate(req, res, next) {
+  const header = req.headers.authorization || ''
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null
+  if (!token) return next()
+
+  try {
+    const payload = require('../auth/tokens').verifyToken(token)
+    const user = await usersRepo.findById(payload.sub)
+    if (user && !user.deleted_at) {
+      req.user = user
+      req.user.isSuperAdmin = !!user.is_super_admin
+      req.user.hasProfilePhoto = !!user.has_profile_photo
+    }
+  } catch {
+    // token invalide ou utilisateur supprimé : on laisse passer anonyme
+  }
+  return next()
+}
+
+module.exports = { authenticate, requireRole, optionalAuthenticate }

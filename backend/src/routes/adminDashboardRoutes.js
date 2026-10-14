@@ -20,7 +20,9 @@ async function getSummary(req, res) {
        (SELECT COUNT(*) FROM vehicles
          WHERE deleted_at IS NULL) AS "activeVehiclesCount",
        (SELECT COUNT(*) FROM reviews
-         WHERE status = 'pending' AND deleted_at IS NULL) AS "pendingReviewsCount"
+         WHERE status = 'pending' AND deleted_at IS NULL) AS "pendingReviewsCount",
+       (SELECT COUNT(*) FROM configuration_requests
+         WHERE status = 'new') AS "newRequestsCount"
      FROM orders`,
   )
   res.json(pgSafe(rows[0]))

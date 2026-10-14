@@ -1,4 +1,71 @@
 {
+  "confirmRequest": {
+    "title": "Merci pour votre requête",
+    "intro": "Un membre de BMW ou de votre partenaire BMW vous contactera rapidement. Pour vous offrir la meilleure expérience possible, veuillez ajouter ou mettre à jour votre numéro de téléphone et votre concessionnaire préféré. À défaut, les coordonnées que nous avons enregistrées seront utilisées pour traiter votre demande.",
+    "loadingVehicle": "Chargement du véhicule…",
+    "vehicleMissing": "Impossible de charger les informations de ce véhicule.",
+    "salutation": "Civilité",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "contactHow": "Veuillez sélectionner le moyen de contact de votre choix :",
+    "contactOption": {
+      "email": "E-mail",
+      "phone": "Téléphone"
+    },
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "preferredCentre": "Veuillez sélectionner votre concessionnaire BMW préféré.",
+    "selectedCentre": "Sélectionné : {{name}} ({{city}})",
+    "selectedCentreConfirmed": "Sélectionné",
+    "selectCentre": "Sélectionner ce centre",
+    "postcodePlaceholder": "Code postal, adresse ou lieu",
+    "searchRetailerPlaceholder": "Rechercher un concessionnaire",
+    "dealersLoading": "Chargement des centres BMW…",
+    "dealersError": "Impossible de charger les centres BMW. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "marketingTitle": "Restez informé des produits et services du Groupe BMW.",
+    "marketingIntro": "Dites-nous comment vous souhaitez être contacté. Vous pouvez partager ces informations avec le partenaire BMW et recevoir des informations utiles sur le Groupe BMW et ses produits et services, des événements utilisateurs et des actualités.",
+    "marketingOptions": {
+      "apps": "Apps du Groupe BMW",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "sms": "SMS (services de messagerie)",
+      "in_car": "Dans le véhicule (si pris en charge)",
+      "mail": "Courrier"
+    },
+    "marketingInfo": "Vous pouvez modifier ces préférences plus tard depuis les paramètres de votre compte.",
+    "marketingWithdraw": "Vous pouvez retirer votre consentement à tout moment.",
+    "benefitsTitle": "MES AVANTAGES",
+    "benefitsIntro": "Rester en contact avec BMW peut vous apporter :",
+    "benefit1": "Des informations sur les nouveaux produits, notamment les nouveaux véhicules, équipements et accessoires.",
+    "benefit2": "Des invitations aux événements BMW destinés aux propriétaires et passionnés.",
+    "benefit3": "Des offres et services spéciaux de BMW et de votre partenaire BMW local.",
+    "benefit4": "Des informations sur la sécurité et les rappels de véhicules.",
+    "updateDetails": "Mettre à jour",
+    "pleaseWait": "Envoi en cours…",
+    "loading": "Chargement de votre demande…",
+    "updated": "Vos coordonnées ont été mises à jour. Merci !",
+    "viewMyRequests": "Voir mes demandes",
+    "emailReadonlyHint": "Pour la modifier, mettez à jour votre compte.",
+    "submitSuccess": "Merci ! Votre demande a été enregistrée.",
+    "privacyBefore": "Le partenaire BMW ou BMW UK vous contactera par téléphone ou par e-mail. Des informations sur le traitement de vos données sont disponibles dans la ",
+    "privacyBmwLink": "Politique de confidentialité BMW",
+    "privacyMid": " et la ",
+    "privacyRetailerLink": "Politique de confidentialité du partenaire BMW",
+    "privacyAfter": ", consultables sur leur site web. Si vous avez accepté de recevoir des communications marketing, vous pourrez également être contacté au sujet des véhicules enregistrés dans votre liste de souhaits.",
+    "errors": {
+      "firstNameRequired": "Veuillez saisir votre prénom.",
+      "firstNameInvalid": "Votre prénom ne peut contenir que des lettres, espaces, tirets, points et apostrophes.",
+      "lastNameRequired": "Veuillez saisir votre nom.",
+      "lastNameInvalid": "Votre nom ne peut contenir que des lettres, espaces, tirets, points et apostrophes.",
+      "emailRequired": "Veuillez saisir votre adresse e-mail.",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+      "phoneRequired": "Le numéro de téléphone est requis lorsque le contact par téléphone est choisi.",
+      "phoneInvalid": "Veuillez saisir un numéro de téléphone valide (7 à 15 chiffres).",
+      "centreRequired": "Veuillez sélectionner un concessionnaire BMW préféré.",
+      "general": "Une erreur est survenue. Veuillez réessayer."
+    }
+  },
   "nav": {
     "models": "Tous les modèles & configurateur",
     "electric": "Électrique",
@@ -59,7 +126,9 @@
     "setResetPassword": "Définir / Réinitialiser le mot de passe",
     "dataPrivacy": "Protection des données",
     "legalNotice": "Mentions légales",
-    "myOrders": "Mes commandes"
+    "myOrders": "Mes commandes",
+    "myRequests": "Mes demandes",
+    "myConfigurations": "Mes configurations"
   },
   "account": {
     "welcome": "Bienvenue sur My BMW.",
@@ -221,10 +290,30 @@
     "emptyText": "Découvrez notre gamme et choisissez le véhicule qu'il vous faut.",
     "browseModels": "Tous les modèles & configurateur",
     "totalPrice": "Prix total",
-    "payNow": "Payer maintenant",
+    "requestOffer": "Demander une offre",
+    "requestingOffer": "Envoi de votre demande…",
+    "requestOfferError": "Impossible d'envoyer votre demande. Veuillez réessayer.",
+    "disabledPrice": "Prix sur demande — contactez-nous"
+  },
+  "offer": {
+    "loading": "Chargement de votre offre…",
+    "error": "Impossible de charger cette offre.",
+    "title": "Votre offre personnalisée",
+    "forVehicle": "Offre pour votre {{model}}",
+    "lines": "Détail",
+    "total": "Total",
+    "delivery": "Livraison estimée : {{min}}–{{max}} semaines.",
+    "deliveryFrom": "Livraison estimée : à partir de {{min}} semaines.",
+    "deliveryUpTo": "Livraison estimée : jusqu'à {{max}} semaines.",
+    "validUntil": "Valable jusqu'au {{date}}",
+    "notes": "Notes de notre équipe",
+    "acceptTerms": "J'accepte les conditions générales de cette offre.",
+    "pay": "Accepter et payer",
     "paying": "Redirection vers le paiement…",
     "payError": "Impossible de lancer le paiement. Veuillez réessayer.",
-    "disabledPrice": "Prix sur demande — contactez-nous"
+    "unavailable": "Cette offre n'est plus disponible.",
+    "statusAccepted": "Cette offre a déjà été acceptée.",
+    "backToRequests": "Retour à mes demandes"
   },
   "orderConfirmation": {
     "title": "Merci pour votre achat !",
@@ -390,6 +479,34 @@
       "processingCancelled": "Annulée"
     }
   },
+  "myRequests": {
+    "title": "Mes demandes",
+    "loading": "Chargement de vos demandes…",
+    "error": "Impossible de charger vos demandes. Veuillez réessayer.",
+    "empty": "Vous n'avez pas encore de demande de configuration.",
+    "reference": "Référence",
+    "date": "Date",
+    "dealer": "Centre BMW",
+    "editDetails": "Modifier mes coordonnées",
+    "status": {
+      "new": "Reçue",
+      "contacted": "Nous vous avons contacté",
+      "offer_sent": "Offre disponible",
+      "converted": "Commande passée",
+      "closed": "Clôturée"
+    }
+  },
+  "myConfigurations": {
+    "title": "Mes configurations",
+    "loading": "Chargement de vos configurations…",
+    "error": "Impossible de charger vos configurations. Veuillez réessayer.",
+    "empty": "Vous n'avez pas encore de configuration enregistrée.",
+    "savedOn": "Enregistrée le",
+    "open": "Ouvrir",
+    "delete": "Supprimer",
+    "deleteConfirmTitle": "Supprimer la configuration",
+    "deleteConfirmMessage": "Cette configuration enregistrée sera supprimée. Cette action est irréversible."
+  },
   "configure": {
     "loading": "Chargement de la configuration…",
     "notFound": "Véhicule introuvable",
@@ -416,6 +533,7 @@
       "exteriorColours": "Couleur extérieure",
       "alloyWheels": "Jantes",
       "optionalEquipment": "Options",
+      "accessories": "Accessoires",
       "charging": "Recharge",
       "summary": "Récapitulatif"
     },
@@ -453,6 +571,12 @@
     },
     "accessories": {
       "total": "Total des accessoires",
+      "count": "{{count}} sélectionné(s)",
+      "includedInTotal": "Inclus dans le prix total",
+      "want": "Ajouter",
+      "added": "Ajouté ✓"
+    },
+    "optionalEquipment": {
       "count": "{{count}} sélectionné(s)",
       "includedInTotal": "Inclus dans le prix total",
       "want": "Ajouter",
@@ -589,7 +713,11 @@
       "and": "et",
       "centrePolicy": "Politique de confidentialité du Concessionnaire BMW",
       "saveOnly": "Enregistrer uniquement",
-      "saveAndConfirm": "Enregistrer et confirmer"
+      "saveAndConfirm": "Enregistrer et confirmer",
+      "savedToast": "Configuration enregistrée dans Mes configurations",
+      "errors": {
+        "generic": "Une erreur est survenue. Veuillez réessayer."
+      }
     }
   }
 }
