@@ -1,5 +1,6 @@
 const { prisma, pgSafe } = require('../db')
 const { notify } = require('../services/adminNotifications')
+const { logAudit } = require('../services/auditLog')
 
 async function createReview(req, res) {
   const { vehicleId, orderId, rating, comment } = req.body || {}
@@ -132,6 +133,7 @@ async function setReviewStatus(req, res) {
   if (result.count === 0) {
     return res.status(404).json({ error: 'Avis introuvable.' })
   }
+  logAudit(req, 'review.status', 'review', req.params.id, { status })
   return res.json({ ok: true, status })
 }
 
@@ -143,6 +145,7 @@ async function deleteReview(req, res) {
   if (result.count === 0) {
     return res.status(404).json({ error: 'Avis introuvable.' })
   }
+  logAudit(req, 'review.delete', 'review', req.params.id)
   return res.json({ ok: true })
 }
 

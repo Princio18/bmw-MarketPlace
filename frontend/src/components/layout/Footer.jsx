@@ -1,13 +1,15 @@
 import { FaLinkedinIn, FaYoutube, FaFacebookF, FaInstagram } from 'react-icons/fa6'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 
-const footerLinkKeys = [
-  'footer.legalNotice',
-  'footer.privacyPolicy',
-  'footer.cookiePolicy',
-  'footer.compliance',
-  'footer.euBattery',
-  'footer.sitemap',
+const footerLinks = [
+  { key: 'footer.terms', to: '/terms' },
+  { key: 'footer.legalNotice' },
+  { key: 'footer.privacyPolicy' },
+  { key: 'footer.cookiePolicy' },
+  { key: 'footer.compliance' },
+  { key: 'footer.euBattery' },
+  { key: 'footer.sitemap' },
 ]
 
 const socials = [
@@ -42,14 +44,23 @@ function Footer({ noTopBorder = false }) {
           {t('footer.copyright')}
         </span>
         <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5">
-          {footerLinkKeys.map((label) => (
-            <li key={label}>
-              <a
-                href="#"
-                className="font-manrope text-xs leading-none text-gray-700 transition hover:text-bmw-blue dark:text-gray-400 dark:hover:text-bmw-blue"
-              >
-                {t(label)}
-              </a>
+          {footerLinks.map(({ key, to }) => (
+            <li key={key}>
+              {to ? (
+                <Link
+                  to={to}
+                  className="font-manrope text-xs leading-none text-gray-700 transition hover:text-bmw-blue dark:text-gray-400 dark:hover:text-bmw-blue"
+                >
+                  {t(key)}
+                </Link>
+              ) : (
+                <a
+                  href="#"
+                  className="font-manrope text-xs leading-none text-gray-700 transition hover:text-bmw-blue dark:text-gray-400 dark:hover:text-bmw-blue"
+                >
+                  {t(key)}
+                </a>
+              )}
             </li>
           ))}
         </ul>

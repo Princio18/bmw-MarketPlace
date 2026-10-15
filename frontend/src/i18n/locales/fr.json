@@ -138,6 +138,7 @@
     "benefit3": "Optimisez votre véhicule avec les Services numériques."
   },
   "footer": {
+    "terms": "Conditions générales",
     "legalNotice": "Mentions légales",
     "privacyPolicy": "Politique de confidentialité",
     "cookiePolicy": "Politique relative aux cookies",
@@ -145,6 +146,37 @@
     "euBattery": "Règlement européen sur les batteries",
     "sitemap": "Plan du site",
     "copyright": "Copyright © BMW AG 2026"
+  },
+  "terms": {
+    "title": "Conditions générales",
+    "versionLabel": "Version",
+    "disclaimer": "Texte de démonstration — ne constitue pas un conseil juridique.",
+    "sections": {
+      "order": {
+        "title": "1. La commande",
+        "body": "Une demande de configuration est une manifestation d'intérêt sans engagement. Le contrat n'est formé qu'à l'acceptation d'une offre et au paiement. La commande confirme le véhicule, sa configuration et le centre BMW sélectionné."
+      },
+      "price": {
+        "title": "2. Prix",
+        "body": "Les prix sont affichés dans la devise applicable et incluent la TVA ainsi que les frais de mise à la route, sauf mention contraire. Le détail du prix affiché sur la page d'offre fait foi pour votre commande."
+      },
+      "payment": {
+        "title": "3. Paiement",
+        "body": "Le paiement est traité de manière sécurisée par notre prestataire (Stripe). Nous ne stockons jamais les données de votre carte. Une commande n'est confirmée qu'après réception effective du paiement."
+      },
+      "cancellation": {
+        "title": "4. Annulation et remboursements",
+        "body": "Vous pouvez demander l'annulation avant la livraison du véhicule. Après livraison, vos droits légaux s'appliquent. Tout remboursement approuvé est effectué sur le moyen de paiement d'origine."
+      },
+      "handover": {
+        "title": "5. Remise du véhicule",
+        "body": "Le véhicule est remis dans le centre sélectionné. Vous serez informé de la date de remise prévue et du numéro d'identification (VIN) avant la livraison."
+      },
+      "data": {
+        "title": "6. Données personnelles",
+        "body": "Vos données personnelles sont traitées pour gérer votre demande, votre offre et votre commande. Pour plus de détails, consultez notre Politique de confidentialité."
+      }
+    }
   },
   "navDropdowns": {
     "electric": {

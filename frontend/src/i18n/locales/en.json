@@ -138,6 +138,7 @@
     "benefit3": "Optimise your vehicle with Digital Services."
   },
   "footer": {
+    "terms": "Terms & Conditions",
     "legalNotice": "Legal Notice",
     "privacyPolicy": "Privacy Policy",
     "cookiePolicy": "Cookie Policy",
@@ -145,6 +146,37 @@
     "euBattery": "EU Battery Regulation",
     "sitemap": "Sitemap",
     "copyright": "Copyright © BMW AG 2026"
+  },
+  "terms": {
+    "title": "Terms & Conditions",
+    "versionLabel": "Version",
+    "disclaimer": "Demo text — not legal advice.",
+    "sections": {
+      "order": {
+        "title": "1. The order",
+        "body": "A configuration request is a non-binding expression of interest. A contract is only formed once you accept a dealer offer and complete payment. The order confirms the vehicle, its configuration and the selected BMW centre."
+      },
+      "price": {
+        "title": "2. Price",
+        "body": "Prices are shown in the applicable currency and include VAT and the on-the-road fee, unless stated otherwise. The price breakdown displayed on the offer page is the authoritative calculation for your order."
+      },
+      "payment": {
+        "title": "3. Payment",
+        "body": "Payment is handled securely by our payment provider (Stripe). We never store your card details. An order is only confirmed once payment has been successfully received."
+      },
+      "cancellation": {
+        "title": "4. Cancellation and refunds",
+        "body": "You may request cancellation before the vehicle is delivered. Once delivered, statutory rights apply. Any approved refund is issued to the original payment method."
+      },
+      "handover": {
+        "title": "5. Handover",
+        "body": "The vehicle is handed over at the selected centre. You will be informed of the scheduled handover date and the vehicle identification number (VIN) before delivery."
+      },
+      "data": {
+        "title": "6. Personal data",
+        "body": "Your personal data is processed to manage your request, offer and order. For details on how we handle your data, please refer to our Privacy Policy."
+      }
+    }
   },
   "navDropdowns": {
     "electric": {

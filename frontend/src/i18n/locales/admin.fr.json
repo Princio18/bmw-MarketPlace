@@ -333,6 +333,7 @@
     "loading": "Chargement…",
     "profileTab": "Profil",
     "teamTab": "Équipe & Permissions",
+    "activityTab": "Journal d'activité",
     "profileTitle": "Profil",
     "fullName": "Nom complet",
     "role": "Rôle",
@@ -362,6 +363,18 @@
     "can_manage_reviews": "Avis",
     "can_view_reports": "Rapports",
     "can_manage_clients": "Clients"
+  },
+  "activity": {
+    "title": "Journal d'activité",
+    "allActions": "Toutes les actions",
+    "date": "Date",
+    "admin": "Administrateur",
+    "action": "Action",
+    "entity": "Entité",
+    "details": "Détails",
+    "empty": "Aucune activité enregistrée.",
+    "previous": "Précédent",
+    "next": "Suivant"
   },
   "vehicles": {
     "title": "Véhicules",

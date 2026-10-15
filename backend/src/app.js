@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
 const { requireJwtSecret, isTwoFactorConfigured } = require('./auth/tokens')
 const { isObjectStorageConfigured } = require('./services/objectStorage')
 const authRoutes = require('./routes/auth')
@@ -18,6 +19,8 @@ const adminOfferRoutes = require('./routes/adminOfferRoutes')
 const adminPaymentRoutes = require('./routes/adminPaymentRoutes')
 const adminReportRoutes = require('./routes/adminReportRoutes')
 const adminTeamRoutes = require('./routes/adminTeamRoutes')
+const adminAuditRoutes = require('./routes/adminAuditRoutes')
+const metaRoutes = require('./routes/metaRoutes')
 const vehiclesRoutes = require('./routes/vehicles')
 const accessoriesRoutes = require('./routes/accessoriesRoutes')
 const cartRoutes = require('./routes/cartRoutes')
@@ -32,6 +35,20 @@ const savedConfigurationRoutes = require('./routes/savedConfigurations')
 requireJwtSecret()
 
 const app = express()
+
+// Derrière le proxy Vercel, req.ip vaut 127.0.0.1 sans ce réglage : toute la
+// limitation de débit par IP retomberait sur une seule clé partagée.
+app.set('trust proxy', 1)
+
+// En-têtes de sécurité. helmet ne pose QUE des en-têtes de réponse : il
+// n'altère pas le corps brut du webhook Stripe monté plus bas.
+// crossOriginResourcePolicy est passé à 'cross-origin' car l'API sert des
+// images (véhicules) chargées depuis le domaine du front.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+)
 
 app.use(cors())
 
@@ -72,6 +89,7 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/meta', metaRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/admin/vehicles', adminVehicleRoutes)
@@ -86,6 +104,7 @@ app.use('/api/admin/offers', adminOfferRoutes)
 app.use('/api/admin/payments', adminPaymentRoutes)
 app.use('/api/admin/reports', adminReportRoutes)
 app.use('/api/admin/team', adminTeamRoutes)
+app.use('/api/admin/audit', adminAuditRoutes)
 app.use('/api/vehicles', vehiclesRoutes)
 app.use('/api/accessories', accessoriesRoutes)
 app.use('/api/cart', cartRoutes)

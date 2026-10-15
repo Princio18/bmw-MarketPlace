@@ -6,6 +6,7 @@ const upload = require('../middleware/upload')
 const { ROLES } = require('../roles')
 const { buildImageFields } = require('../utils/imagePersistence')
 const accessoryService = require('../services/accessoryService')
+const { logAudit } = require('../services/auditLog')
 
 const DRIVETRAINS = ['electric', 'hybrid', 'petrol', 'diesel', 'concept', 'protection']
 const DEFAULT_VARIANT = 'Models'
@@ -218,6 +219,9 @@ async function createVehicle(req, res) {
   })
 
   const vehicle = await findVehicleById(created.id)
+  logAudit(req, 'vehicle.create', 'vehicle', created.id, {
+    modelName: modelName.trim(),
+  })
   return res.status(201).json(vehicle)
 }
 
@@ -251,6 +255,7 @@ async function updateVehicle(req, res) {
   }
 
   const vehicle = await findVehicleById(existing.id)
+  logAudit(req, 'vehicle.update', 'vehicle', existing.id)
   return res.json(vehicle)
 }
 
@@ -270,6 +275,7 @@ async function deleteVehicle(req, res) {
   if (result.count === 0) {
     return res.status(404).json({ error: 'Véhicule introuvable.' })
   }
+  logAudit(req, 'vehicle.delete', 'vehicle', req.params.id)
   return res.json({ ok: true })
 }
 

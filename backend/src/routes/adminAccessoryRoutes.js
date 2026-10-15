@@ -6,6 +6,7 @@ const upload = require('../middleware/upload')
 const { ROLES } = require('../roles')
 const accessoryService = require('../services/accessoryService')
 const { buildImageFields } = require('../utils/imagePersistence')
+const { logAudit } = require('../services/auditLog')
 
 function toBool(value) {
   return value === true || value === 'true' || value === '1'
@@ -115,6 +116,7 @@ async function createAccessory(req, res) {
     select: { id: true },
   })
 
+  logAudit(req, 'accessory.create', 'accessory', created.id)
   return res.status(201).json(await accessoryService.findAccessoryById(created.id))
 }
 
@@ -158,6 +160,7 @@ async function updateAccessory(req, res) {
     await prisma.accessories.update({ where: { id: existing.id }, data })
   }
 
+  logAudit(req, 'accessory.update', 'accessory', existing.id)
   return res.json(await accessoryService.findAccessoryById(existing.id))
 }
 
@@ -170,6 +173,7 @@ async function deleteAccessory(req, res) {
   if (result.count === 0) {
     return notFound(res)
   }
+  logAudit(req, 'accessory.delete', 'accessory', req.params.id)
   return res.json({ ok: true })
 }
 

@@ -3,6 +3,7 @@ const { requestRef } = require('../utils/requestRef')
 const accessoryService = require('../services/accessoryService')
 const { sendAdminMessageEmail } = require('../services/adminMessageEmail')
 const { logRequestMessage } = require('../services/requestMessages')
+const { logAudit } = require('../services/auditLog')
 const { expireStaleOffers } = require('../services/offersService')
 
 const REQUEST_STATUSES = new Set([
@@ -233,6 +234,10 @@ async function setStatus(req, res) {
   }
 
   await prisma.configuration_requests.update({ where: { id: request.id }, data })
+  logAudit(req, 'request.status', 'configuration_request', request.id, {
+    from: request.status,
+    to: status,
+  })
   return res.json({ ok: true, status })
 }
 
@@ -319,6 +324,10 @@ async function sendMessage(req, res) {
       data: { status: 'contacted', updated_at: new Date() },
     })
   }
+
+  logAudit(req, 'request.message', 'configuration_request', request.id, {
+    subject: trimmedSubject,
+  })
 
   return res.json({ ok: true })
 }

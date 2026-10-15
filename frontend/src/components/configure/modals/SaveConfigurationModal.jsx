@@ -20,6 +20,9 @@ function SaveConfigurationBody({ vehicle, selectedOptions, onClose, onSaved }) {
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  // Champ piège anti-robot (voir handleSaveAndConfirm). Un humain ne le voit ni
+  // ne le remplit ; un bot qui remplit tous les champs le renseigne.
+  const [honeypot, setHoneypot] = useState('')
 
   // Visiteur non connecté : on met la configuration de côté puis on file vers
   // le login. Après connexion, Login renvoie sur le configurateur qui restaure
@@ -71,6 +74,7 @@ function SaveConfigurationBody({ vehicle, selectedOptions, onClose, onSaved }) {
       const { data } = await api.post('/configuration-requests', {
         vehicleId: vehicle?.id,
         configurationData: selectedOptions,
+        website: honeypot,
       })
       onClose()
       navigate(`/configure/${vehicle?.id}/confirm-request`, {
@@ -87,6 +91,16 @@ function SaveConfigurationBody({ vehicle, selectedOptions, onClose, onSaved }) {
 
   return (
     <>
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        className="pointer-events-none absolute -left-[9999px] h-0 w-0 opacity-0"
+      />
       <div className="grid gap-6 md:grid-cols-2">
         <div>
           <h3 className="text-base font-bold uppercase tracking-wide text-gray-900">

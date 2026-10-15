@@ -5,6 +5,78 @@ const { expireStaleOffers } = require('../services/offersService')
 const { TERMS_VERSION } = require('../terms')
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+// Base absolue des images produit pour Stripe. Sur Vercel, FRONTEND_URL ne
+// suffit pas : Stripe doit pouvoir charger l'image côté serveur, on privilégie
+// donc BACKEND_URL, sinon l'URL de la requête courante.
+const BACKEND_URL = process.env.BACKEND_URL || ''
+
+const penceFromAmount = (amount) => Math.round(Number(amount) * 100)
+
+// Construit les lignes Stripe depuis le décompte figé de l'offre (TTC). Les
+// lignes positives deviennent des lignes de commande ; les ajustements négatifs
+// sont regroupés en un coupon de remise (Stripe n'accepte pas de ligne
+// négative). On NE rajoute PAS de ligne TVA : les prix sont TTC, la TVA est
+// déjà incluse dans chaque montant.
+function buildStripeLineItems(offer, order, dealerName, imageBaseUrl) {
+  const currency = (offer.currency || 'GBP').toLowerCase()
+  const breakdown = offer.price_breakdown || {}
+  const lines = Array.isArray(breakdown.lines) ? breakdown.lines : []
+  const counted = lines.filter((line) => line.counted !== false)
+
+  const lineItems = []
+  let discountPence = 0
+  let positivePence = 0
+
+  for (const line of counted) {
+    const unitAmount = penceFromAmount(line.amount)
+    if (unitAmount > 0) {
+      const isVehicle = line.kind === 'vehicle'
+      const productData = {
+        name: isVehicle
+          ? `BMW ${offer.modelName}${offer.variantLabel ? ` ${offer.variantLabel}` : ''}`.trim()
+          : String(line.label || 'Item'),
+      }
+      if (isVehicle) {
+        const ref = `#${String(order.id).slice(0, 8).toUpperCase()}`
+        productData.description = `Order ${ref} — handover at ${
+          dealerName || 'to be confirmed'
+        }`
+        if (imageBaseUrl) {
+          productData.images = [
+            `${imageBaseUrl}/api/vehicles/${offer.vehicle_id}/image`,
+          ]
+        }
+      }
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency,
+          unit_amount: unitAmount,
+          product_data: productData,
+        },
+      })
+      positivePence += unitAmount
+    } else if (unitAmount < 0) {
+      discountPence += Math.abs(unitAmount)
+    }
+  }
+
+  // Garde-fou : jamais de session Stripe sans ligne.
+  if (lineItems.length === 0) {
+    lineItems.push({
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: Math.max(0, Math.round(Number(offer.total_amount) * 100)),
+        product_data: {
+          name: `BMW ${offer.modelName}${offer.variantLabel ? ` ${offer.variantLabel}` : ''}`.trim(),
+        },
+      },
+    })
+  }
+
+  return { lineItems, discountPence, positivePence, currency }
+}
 
 function mapPublicOffer(row) {
   const safe = pgSafe(row)
@@ -113,6 +185,8 @@ async function checkoutOffer(req, res) {
       currency: offer.currency || 'GBP',
       status: 'pending',
       price_breakdown: offer.price_breakdown,
+      // Version des conditions acceptées (traçabilité juridique).
+      terms_version: TERMS_VERSION,
       // Centre de remise préféré saisi par le client sur la demande ; point de
       // départ du suivi post-paiement (modifiable ensuite par un admin).
       handover_dealer_id: offer.preferredDealerId || null,
@@ -120,23 +194,86 @@ async function checkoutOffer(req, res) {
     select: { id: true },
   })
 
-  const session = await stripe.checkout.sessions.create({
+  // Nom du centre de remise affiché sur la ligne Stripe (facultatif).
+  let dealerName = null
+  if (offer.preferredDealerId) {
+    const dealer = await prisma.dealers.findUnique({
+      where: { id: offer.preferredDealerId },
+      select: { name: true },
+    })
+    dealerName = dealer?.name || null
+  }
+
+  const imageBaseUrl =
+    BACKEND_URL || `${req.protocol}://${req.get('host')}`
+
+  const { lineItems, discountPence, positivePence, currency } =
+    buildStripeLineItems(offer, order, dealerName, imageBaseUrl)
+
+  // Garde-fou : le total Stripe doit correspondre au penny près au montant de la
+  // commande. Sinon on expire la commande (évite une session incohérente).
+  const expectedPence = Math.round(amount * 100)
+  if (positivePence - discountPence !== expectedPence) {
+    console.error(
+      `[checkout] décalage de prix offre ${offer.id} : lignes ${positivePence} - remise ${discountPence} ≠ attendu ${expectedPence}`,
+    )
+    await prisma.orders.update({
+      where: { id: order.id },
+      data: { status: 'expired' },
+    })
+    return res.status(500).json({ error: 'Pricing mismatch.' })
+  }
+
+  // Ajustements négatifs -> coupon (Stripe n'accepte pas de montant négatif).
+  let discounts
+  if (discountPence > 0) {
+    const coupon = await stripe.coupons.create({
+      amount_off: discountPence,
+      currency,
+      duration: 'once',
+      name: 'Discount',
+    })
+    discounts = [{ coupon: coupon.id }]
+  }
+
+  const sessionParams = {
     mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price_data: {
-          currency: (offer.currency || 'GBP').toLowerCase(),
-          product_data: { name: `BMW ${offer.modelName} — offer` },
-          unit_amount: Math.round(amount * 100),
-        },
-        quantity: 1,
-      },
-    ],
+    submit_type: 'pay',
+    // Sans payment_method_types : Stripe applique les moyens de paiement
+    // activés dans le tableau de bord.
+    line_items: lineItems,
+    customer_email: req.user.email,
+    client_reference_id: order.id,
+    billing_address_collection: 'required',
+    allow_promotion_codes: false,
+    ...(discounts ? { discounts } : {}),
+    custom_text: {
+      submit: { message: `Payment for your BMW ${offer.modelName}.` },
+    },
+    payment_intent_data: {
+      description: `BMW ${offer.modelName} — order #${String(order.id).slice(0, 8).toUpperCase()}`,
+      metadata: { orderId: order.id, offerId: offer.id },
+    },
+    metadata: { orderId: order.id, offerId: offer.id },
     success_url: `${FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}&order=${order.id}`,
     cancel_url: `${FRONTEND_URL}/offers/${offer.id}`,
-    metadata: { orderId: order.id, offerId: offer.id },
-  })
+  }
+
+  let session
+  try {
+    session = await stripe.checkout.sessions.create({
+      ...sessionParams,
+      adaptive_pricing: { enabled: false },
+    })
+  } catch (err) {
+    // `adaptive_pricing` n'existe pas dans toutes les versions d'API Stripe :
+    // on réessaie sans ce paramètre plutôt que de faire échouer le paiement.
+    if (/adaptive_pricing/i.test(String(err?.message || ''))) {
+      session = await stripe.checkout.sessions.create(sessionParams)
+    } else {
+      throw err
+    }
+  }
 
   await prisma.orders.update({
     where: { id: order.id },

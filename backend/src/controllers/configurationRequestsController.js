@@ -153,6 +153,12 @@ async function createConfigurationRequest(req, res) {
   const body = req.body || {}
   const userId = req.user.id
 
+  // Champ piège anti-robot : invisible pour un humain, souvent rempli par les
+  // bots qui remplissent tous les champs. On répond 200 sans rien créer.
+  if (typeof body.website === 'string' && body.website.trim() !== '') {
+    return res.status(200).json({ ok: true })
+  }
+
   const vehicleId = trimOrNull(body.vehicleId)
   if (!vehicleId) {
     return res.status(400).json({ error: 'Véhicule requis.' })

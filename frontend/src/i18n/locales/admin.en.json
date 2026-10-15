@@ -333,6 +333,7 @@
     "loading": "Loading…",
     "profileTab": "Profile",
     "teamTab": "Team & Permissions",
+    "activityTab": "Activity log",
     "profileTitle": "Profile",
     "fullName": "Full name",
     "role": "Role",
@@ -362,6 +363,18 @@
     "can_manage_reviews": "Reviews",
     "can_view_reports": "Reports",
     "can_manage_clients": "Clients"
+  },
+  "activity": {
+    "title": "Activity log",
+    "allActions": "All actions",
+    "date": "Date",
+    "admin": "Administrator",
+    "action": "Action",
+    "entity": "Entity",
+    "details": "Details",
+    "empty": "No activity recorded.",
+    "previous": "Previous",
+    "next": "Next"
   },
   "vehicles": {
     "title": "Vehicles",

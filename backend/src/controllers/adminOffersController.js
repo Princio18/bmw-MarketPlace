@@ -2,6 +2,7 @@ const { prisma, pgSafe } = require('../db')
 const { computeRequestPricing } = require('../services/pricingService')
 const { expireStaleOffers } = require('../services/offersService')
 const { sendOfferEmailByOfferId } = require('../services/offerEmail')
+const { logAudit } = require('../services/auditLog')
 const { TERMS_VERSION } = require('../terms')
 
 const OFFER_STATUSES = new Set(['active', 'accepted', 'expired', 'withdrawn'])
@@ -175,6 +176,12 @@ async function createOffer(req, res) {
     console.error('[admin-offers] échec envoi email offre :', err.message)
   }
 
+  logAudit(req, 'offer.create', 'offer', created.id, {
+    requestId: request.id,
+    total: pricing.total,
+    currency: pricing.currency,
+  })
+
   return res.status(201).json({ offer: mapOffer(created), emailSent })
 }
 
@@ -196,6 +203,7 @@ async function resendOffer(req, res) {
     emailSent = false
     console.error('[admin-offers] échec renvoi email offre :', err.message)
   }
+  logAudit(req, 'offer.resend', 'offer', offer.id)
   return res.json({ emailSent })
 }
 
@@ -213,6 +221,7 @@ async function withdrawOffer(req, res) {
     if (!exists) return res.status(404).json({ error: 'Offre introuvable.' })
     return res.status(409).json({ error: 'Only an active offer can be withdrawn.' })
   }
+  logAudit(req, 'offer.withdraw', 'offer', req.params.id)
   return res.json({ ok: true })
 }
 

@@ -2,6 +2,7 @@ const { Router } = require('express')
 const { prisma, pgSafe } = require('../db')
 const { authenticate, requireRole } = require('../middleware/auth')
 const { requireSuperAdmin } = require('../middleware/requireSuperAdmin')
+const { logAudit } = require('../services/auditLog')
 const { ROLES } = require('../roles')
 
 const ADMIN_ROLE = "(SELECT id FROM roles WHERE name = 'admin')"
@@ -108,6 +109,7 @@ async function updatePermissions(req, res) {
       updated_at: new Date(),
     },
   })
+  logAudit(req, 'admin.permissions', 'user', target.id, values)
   res.json({ ok: true })
 }
 
@@ -125,6 +127,7 @@ async function promoteUser(req, res) {
     data: { is_super_admin: true, updated_at: new Date() },
   })
   await prisma.admin_permissions.deleteMany({ where: { user_id: target.id } })
+  logAudit(req, 'admin.promote', 'user', target.id)
   res.json({ ok: true })
 }
 

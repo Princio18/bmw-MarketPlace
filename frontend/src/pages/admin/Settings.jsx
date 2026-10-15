@@ -466,6 +466,167 @@ function TeamTab() {
   )
 }
 
+const AUDIT_ACTIONS = [
+  'offer.create',
+  'offer.resend',
+  'offer.withdraw',
+  'order.status',
+  'order.refund',
+  'request.status',
+  'request.message',
+  'vehicle.create',
+  'vehicle.update',
+  'vehicle.delete',
+  'accessory.create',
+  'accessory.update',
+  'accessory.delete',
+  'review.status',
+  'review.delete',
+  'admin.create',
+  'admin.permissions',
+  'admin.promote',
+]
+
+function ActivityTab() {
+  const { t } = useTranslation('admin')
+  const [entries, setEntries] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [action, setAction] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const pageSize = 25
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    const params = { page, pageSize }
+    if (action) params.action = action
+    api
+      .get('/admin/audit', { ...authHeader, params })
+      .then(({ data }) => {
+        if (cancelled) return
+        setEntries(data.entries || [])
+        setTotal(data.total || 0)
+        setError(false)
+      })
+      .catch(() => {
+        if (!cancelled) setError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [page, action])
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  return (
+    <div className="grid max-w-5xl gap-6">
+      <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            {t('activity.title')}
+          </h2>
+          <select
+            value={action}
+            onChange={(e) => {
+              setPage(1)
+              setAction(e.target.value)
+            }}
+            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-gray-900 focus:border-bmw-blue focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          >
+            <option value="">{t('activity.allActions')}</option>
+            {AUDIT_ACTIONS.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.loading')}</p>
+        ) : error ? (
+          <p className="text-sm text-red-600 dark:text-red-400">{t('common.error')}</p>
+        ) : entries.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('activity.empty')}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="border-b border-zinc-200 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                <tr>
+                  <th className="px-4 py-3 font-medium">{t('activity.date')}</th>
+                  <th className="px-4 py-3 font-medium">{t('activity.admin')}</th>
+                  <th className="px-4 py-3 font-medium">{t('activity.action')}</th>
+                  <th className="px-4 py-3 font-medium">{t('activity.entity')}</th>
+                  <th className="px-4 py-3 font-medium">{t('activity.details')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-gray-800">
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="align-top">
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-200">
+                      {new Date(entry.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                      {entry.admin?.name || entry.admin?.email || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-block rounded-sm bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                        {entry.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+                      {entry.entityType ? (
+                        <span>
+                          {entry.entityType}
+                          {entry.entityId ? ` · ${entry.entityId.slice(0, 8)}` : ''}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="max-w-[240px] truncate px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                      {entry.metadata ? JSON.stringify(entry.metadata) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-zinc-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              {t('activity.previous')}
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-zinc-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              {t('activity.next')}
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
 function TabButton({ active, onClick, children }) {
   return (
     <button
@@ -503,9 +664,26 @@ function Settings() {
             {t('settings.teamTab')}
           </TabButton>
         )}
+        {isSuperAdmin && (
+          <TabButton active={tab === 'activity'} onClick={() => setTab('activity')}>
+            {t('settings.activityTab')}
+          </TabButton>
+        )}
       </div>
 
-      {tab === 'team' && isSuperAdmin ? <TeamTab /> : <ProfileTab />}
+      {tab === 'activity' && isSuperAdmin ? (
+        <div className="mt-6">
+          <ActivityTab />
+        </div>
+      ) : tab === 'team' && isSuperAdmin ? (
+        <div className="mt-6">
+          <TeamTab />
+        </div>
+      ) : (
+        <div className="mt-6">
+          <ProfileTab />
+        </div>
+      )}
     </div>
   )
 }

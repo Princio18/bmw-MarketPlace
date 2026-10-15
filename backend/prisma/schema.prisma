@@ -53,6 +53,7 @@ model users {
   saved_configurations saved_configurations[]
   offers                offers[]             @relation("offers_created_by")
   order_status_history  order_status_history[] @relation("order_status_history_changed_by")
+  audit_logs            audit_log[]           @relation("audit_log_admin")
 }
 
 model vehicles {
@@ -190,6 +191,7 @@ model orders {
   handover_dealer_id         String?   @db.Uuid
   scheduled_handover_at      DateTime? @db.Timestamp(6)
   vin                        String?   @db.VarChar(17)
+  terms_version              String?   @db.VarChar(20)
   created_at                 DateTime  @default(now()) @db.Timestamp(6)
 
   user           users                  @relation(fields: [user_id], references: [id])
@@ -362,4 +364,24 @@ model order_status_history {
 
   order   orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
   changer users? @relation("order_status_history_changed_by", fields: [changed_by], references: [id], onDelete: SetNull)
+}
+
+model rate_limits {
+  key      String   @id
+  hits     Int
+  reset_at DateTime @db.Timestamptz(6)
+}
+
+model audit_log {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  admin_id    String?   @db.Uuid
+  action      String    @db.VarChar(60)
+  entity_type String?   @db.VarChar(30)
+  entity_id   String?   @db.Uuid
+  metadata    Json?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+
+  admin users? @relation("audit_log_admin", fields: [admin_id], references: [id], onDelete: SetNull)
+
+  @@index([created_at(sort: Desc)], map: "idx_audit_created")
 }

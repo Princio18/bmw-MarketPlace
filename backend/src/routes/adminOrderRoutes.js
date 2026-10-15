@@ -7,6 +7,7 @@ const { sendOrderReceipt } = require('../services/receiptService')
 const { getStripe } = require('../services/stripeClient')
 const { recordTransition } = require('../services/orderHistoryService')
 const { sendOrderStatusEmail } = require('../services/orderStatusEmail')
+const { logAudit } = require('../services/auditLog')
 const { background } = require('../utils/background')
 
 const PROCESSING_STATUSES = ['pending', 'ready', 'delivered', 'cancelled']
@@ -157,6 +158,12 @@ async function setProcessingStatus(req, res) {
     }),
   )
 
+  logAudit(req, 'order.status', 'order', order.id, {
+    from,
+    to: processingStatus,
+    vin: data.vin ?? null,
+  })
+
   return res.json({ ok: true, processingStatus })
 }
 
@@ -232,6 +239,10 @@ async function refundOrder(req, res) {
   // Le statut de la commande n'est PAS modifié ici : c'est le webhook
   // `charge.refunded` qui fait foi, exactement comme pour le paiement initial.
   await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
+
+  logAudit(req, 'order.refund', 'order', order.id, {
+    paymentIntentId: order.stripe_payment_intent_id,
+  })
 
   return res.json({ refundInitiated: true })
 }

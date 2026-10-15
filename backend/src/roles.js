@@ -23,6 +23,7 @@ const RBAC = {
     'GET /api/vehicles/:id/reviews/summary',
     'GET /api/vehicles/:id/config',
     'GET /api/vehicles/price-range',
+    'GET /api/meta',
     'POST /api/payments/webhook',
   ],
   client: [
@@ -66,6 +67,7 @@ const RBAC = {
     'POST /api/admin/orders/:id/refund',
     'POST /api/admin/orders/:id/resend-receipt',
     'GET /api/admin/payments/balance',
+    'GET /api/admin/audit',
     'GET /api/admin/reviews',
     'PUT /api/admin/reviews/:id/status',
     'DELETE /api/admin/reviews/:id',

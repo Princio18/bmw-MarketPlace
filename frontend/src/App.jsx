@@ -38,6 +38,7 @@ import MyOrders from './pages/MyOrders'
 import OrderTracking from './pages/OrderTracking'
 import MyRequests from './pages/MyRequests'
 import MyConfigurations from './pages/MyConfigurations'
+import Terms from './pages/Terms'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { useIdleLogout } from './hooks/useIdleLogout'
 
@@ -58,6 +59,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/find-a-bmw-centre" element={<FindBmwCentre />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="/all-models" element={<AllModels />} />
       <Route
         path="/vehicles/:id"

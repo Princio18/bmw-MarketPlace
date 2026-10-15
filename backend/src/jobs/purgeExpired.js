@@ -42,6 +42,13 @@ async function purgeExpiredRows() {
   })
   report.push(`clients_inactifs_expires : ${rClient.count}`)
 
+  // Compteurs de limitation de débit dont la fenêtre est terminée depuis plus
+  // d'un jour : le DELETE est fait en SQL brut (table sans modèle Prisma lourd).
+  const rRate = await prisma.$executeRawUnsafe(
+    `DELETE FROM rate_limits WHERE reset_at < now() - interval '1 day'`,
+  )
+  report.push(`rate_limits : ${rRate}`)
+
   console.log(`[purge] ${new Date().toISOString()} — ${report.join(', ')}`)
   return report
 }

@@ -6,6 +6,7 @@ const { ROLES } = require('../roles')
 const { createAdminUser } = require('../services/adminService')
 const { requireSuperAdmin } = require('../middleware/requireSuperAdmin')
 const { isValidEmail, validatePassword } = require('../auth/validation')
+const { logAudit } = require('../services/auditLog')
 const { prisma } = require('../db')
 
 const router = Router()
@@ -79,6 +80,7 @@ router.post('/create-admin', requireSuperAdmin, createAdminLimiter, async (req, 
     })
 
     console.log(`[admin] Nouvel admin créé par ${req.user.id} : ${user.email}`)
+    logAudit(req, 'admin.create', 'user', user.id, { email: user.email })
     return res.status(201).json({ id: user.id, email: user.email, role: user.role })
   } catch (err) {
     if (err.code === 'P2002') {
