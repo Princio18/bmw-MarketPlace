@@ -52,6 +52,7 @@ model users {
   request_messages      request_messages[]
   saved_configurations saved_configurations[]
   offers                offers[]             @relation("offers_created_by")
+  order_status_history  order_status_history[] @relation("order_status_history_changed_by")
 }
 
 model vehicles {
@@ -186,13 +187,18 @@ model orders {
   receipt_sent_at            DateTime? @db.Timestamp(6)
   offer_id                   String?   @db.Uuid
   price_breakdown            Json?
+  handover_dealer_id         String?   @db.Uuid
+  scheduled_handover_at      DateTime? @db.Timestamp(6)
+  vin                        String?   @db.VarChar(17)
   created_at                 DateTime  @default(now()) @db.Timestamp(6)
 
-  user    users    @relation(fields: [user_id], references: [id])
-  vehicle vehicles @relation(fields: [vehicle_id], references: [id])
-  cart    carts?   @relation(fields: [cart_id], references: [id])
-  reviews reviews[]
-  offer          offers? @relation("order_offer", fields: [offer_id], references: [id], onDelete: SetNull)
+  user           users                  @relation(fields: [user_id], references: [id])
+  vehicle        vehicles               @relation(fields: [vehicle_id], references: [id])
+  cart           carts?                 @relation(fields: [cart_id], references: [id])
+  reviews        reviews[]
+  offer          offers?                @relation("order_offer", fields: [offer_id], references: [id], onDelete: SetNull)
+  dealer         dealers?               @relation(fields: [handover_dealer_id], references: [id], onDelete: SetNull)
+  status_history order_status_history[]
 }
 
 model reviews {
@@ -241,7 +247,8 @@ model dealers {
   longitude Decimal  @db.Decimal(9, 6)
 
   configuration_requests configuration_requests[]
-}
+  orders                 orders[]
+  }
 
 // Demande de configuration « Save and Confirm ». Créée immédiatement par un
 // utilisateur authentifié, puis complétée par la page « Update details » (PUT).
@@ -343,4 +350,16 @@ model offers {
   @@index([request_id], map: "idx_offers_request")
   @@index([status], map: "idx_offers_status")
   @@index([vehicle_id])
+}
+
+model order_status_history {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id   String    @db.Uuid
+  to_status  String    @db.VarChar(20)
+  note       String?
+  changed_by String?   @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  order   orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  changer users? @relation("order_status_history_changed_by", fields: [changed_by], references: [id], onDelete: SetNull)
 }

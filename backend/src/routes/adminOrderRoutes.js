@@ -5,8 +5,23 @@ const { checkPermission } = require('../middleware/checkPermission')
 const { ROLES } = require('../roles')
 const { sendOrderReceipt } = require('../services/receiptService')
 const { getStripe } = require('../services/stripeClient')
+const { recordTransition } = require('../services/orderHistoryService')
+const { sendOrderStatusEmail } = require('../services/orderStatusEmail')
+const { background } = require('../utils/background')
 
 const PROCESSING_STATUSES = ['pending', 'ready', 'delivered', 'cancelled']
+
+// Graphe des transitions autorisées. Un saut d'étape ou un retour arrière
+// n'apparaît pas ici et sera donc refusé (400). 'delivered' et 'cancelled'
+// sont terminaux.
+const ALLOWED_TRANSITIONS = {
+  pending: ['ready', 'cancelled'],
+  ready: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: [],
+}
+
+const VIN_REGEX = /^[A-HJ-NPR-Z0-9]{17}$/
 
 const ORDER_SELECT = `
   SELECT
@@ -71,21 +86,127 @@ async function resendReceipt(req, res) {
 }
 
 async function setProcessingStatus(req, res) {
-  const { processingStatus } = req.body || {}
+  const { processingStatus, scheduledHandoverAt, vin, note } = req.body || {}
   if (!PROCESSING_STATUSES.includes(processingStatus)) {
     return res
       .status(400)
       .json({ error: `processingStatus doit être l'un de : ${PROCESSING_STATUSES.join(', ')}.` })
   }
 
-  const result = await prisma.orders.updateMany({
+  const order = await prisma.orders.findFirst({
     where: { id: req.params.id },
-    data: { processing_status: processingStatus },
+    select: { id: true, status: true, processing_status: true },
   })
-  if (result.count === 0) {
+  if (!order) {
     return res.status(404).json({ error: 'Commande introuvable.' })
   }
+  if (order.status !== 'paid') {
+    return res.status(409).json({ error: 'Only paid orders can be updated.' })
+  }
+
+  const from = order.processing_status || 'pending'
+  const allowed = ALLOWED_TRANSITIONS[from] || []
+  if (processingStatus === from) {
+    return res.status(400).json({ error: `Order is already '${from}'.` })
+  }
+  if (!allowed.includes(processingStatus)) {
+    return res
+      .status(400)
+      .json({ error: `Transition '${from}' → '${processingStatus}' is not allowed.` })
+  }
+
+  const data = { processing_status: processingStatus }
+
+  if (processingStatus === 'ready') {
+    const normalizedVin = String(vin || '').trim().toUpperCase()
+    if (!VIN_REGEX.test(normalizedVin)) {
+      return res
+        .status(400)
+        .json({ error: 'A valid 17-character VIN is required (letters I, O, Q excluded).' })
+    }
+    const scheduled = scheduledHandoverAt ? new Date(scheduledHandoverAt) : null
+    if (!scheduled || Number.isNaN(scheduled.getTime())) {
+      return res.status(400).json({ error: 'A valid handover date and time is required.' })
+    }
+    if (scheduled.getTime() <= Date.now()) {
+      return res.status(400).json({ error: 'The handover date must be in the future.' })
+    }
+    data.vin = normalizedVin
+    data.scheduled_handover_at = scheduled
+  }
+
+  // Transaction : la transition de statut et sa ligne d'historique sont
+  // indissociables (exactement une ligne par changement).
+  await prisma.$transaction(async (tx) => {
+    await tx.orders.update({ where: { id: order.id }, data })
+    await tx.order_status_history.create({
+      data: {
+        order_id: order.id,
+        to_status: processingStatus,
+        note: note ? String(note).slice(0, 500) : null,
+        changed_by: req.user.id,
+      },
+    })
+  })
+
+  // Email client en tâche de fond : un échec SMTP ne doit pas annuler la
+  // transition déjà persistée.
+  background(
+    sendOrderStatusEmail(order.id).catch((err) => {
+      console.error('[admin] échec email statut commande', order.id, ':', err.message)
+    }),
+  )
+
   return res.json({ ok: true, processingStatus })
+}
+
+// GET /api/admin/orders/:id — détail complet + historique pour le panneau admin.
+async function getOrderDetail(req, res) {
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT
+       o.id,
+       o.amount::float8 AS "amount",
+       o.currency,
+       o.status,
+       o.processing_status AS "processingStatus",
+       o.vin,
+       o.scheduled_handover_at AS "scheduledHandoverAt",
+       o.refunded_at AS "refundedAt",
+       o.created_at AS "createdAt",
+       o.receipt_sent_at AS "receiptSentAt",
+       o.offer_id AS "offerId",
+       o.price_breakdown AS "priceBreakdown",
+       u.email AS "buyerEmail",
+       v.model_name AS "modelName",
+       v.variant_label AS "variantLabel",
+       d.name AS "dealerName",
+       d.city AS "dealerCity"
+     FROM orders o
+     JOIN users u ON u.id = o.user_id
+     JOIN vehicles v ON v.id = o.vehicle_id
+     LEFT JOIN dealers d ON d.id = o.handover_dealer_id
+     WHERE o.id = $1`,
+    req.params.id,
+  )
+  const order = pgSafe(rows)[0]
+  if (!order) {
+    return res.status(404).json({ error: 'Commande introuvable.' })
+  }
+
+  const history = await prisma.$queryRawUnsafe(
+    `SELECT
+       h.to_status AS "status",
+       h.note,
+       h.created_at AS "at",
+       u.email AS "changedByEmail"
+     FROM order_status_history h
+     LEFT JOIN users u ON u.id = h.changed_by
+     WHERE h.order_id = $1
+     ORDER BY h.created_at ASC`,
+    order.id,
+  )
+
+  return res.json({ order, history: pgSafe(history) })
 }
 
 async function refundOrder(req, res) {
@@ -122,6 +243,7 @@ router.use(requireRole(ROLES.ADMIN))
 
 router.get('/', listOrders)
 router.get('/summary', getSummary)
+router.get('/:id', getOrderDetail)
 router.post('/:id/resend-receipt', resendReceipt)
 router.put('/:id/status', checkPermission('can_manage_orders'), setProcessingStatus)
 router.post('/:id/refund', checkPermission('can_process_refunds'), refundOrder)

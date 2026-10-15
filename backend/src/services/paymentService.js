@@ -4,6 +4,8 @@ const { prisma } = require('../db')
 const { sendOrderReceipt } = require('./receiptService')
 const { background } = require('../utils/background')
 const accessoryService = require('./accessoryService')
+const { recordTransitionOnce } = require('./orderHistoryService')
+const { sendRefundEmail } = require('./refundEmail')
 
 function verifyWebhookSignature(rawBody, signature) {
   if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -137,6 +139,13 @@ async function handleCheckoutCompleted(session) {
     await markOfferPaid(order.offer_id, order.id)
   }
 
+  // Historique : ligne système 'paid' (une seule, même en cas de rejeu).
+  await recordTransitionOnce({
+    orderId: order.id,
+    toStatus: 'paid',
+    note: 'Payment confirmed via Stripe',
+  })
+
   // Après le marquage « paid » : on décrémente le stock des accessoires.
   if (order.cart_id) {
     await decrementAccessoryStock(order)
@@ -185,6 +194,16 @@ async function handleChargeRefunded(charge) {
     console.error('[webhook] charge.refunded sans commande associée :', charge.id)
     return
   }
+
+  await recordTransitionOnce({
+    orderId: order.id,
+    toStatus: 'refunded',
+    note: 'Refund initiated via Stripe',
+  })
+
+  const refundedAmount =
+    typeof charge.amount_refunded === 'number' ? charge.amount_refunded / 100 : null
+  background(sendRefundEmail(order.id, refundedAmount))
 
   notify({
     type: 'refund',

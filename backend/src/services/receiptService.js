@@ -265,4 +265,41 @@ async function sendOrderReceipt(orderId) {
   })
 }
 
-module.exports = { generateReceiptPdf, renderReceiptEmail, sendOrderReceipt }
+// Recharge le reçu à la volée pour une commande (Téléchargement client). Même
+// source de lignes que l'envoi par email : décompte figé de l'offre, sinon
+// lignes panier relues en base.
+async function generateReceiptPdfForOrder(orderId) {
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT
+       o.*,
+       u.email,
+       v.model_name AS "modelName",
+       v.variant_label AS "variantLabel",
+       v.base_price::float8 AS "basePrice",
+       o.price_breakdown AS "priceBreakdown",
+       c.configuration_data AS "configurationData"
+     FROM orders o
+     JOIN users u ON u.id = o.user_id
+     JOIN vehicles v ON v.id = o.vehicle_id
+     LEFT JOIN carts c ON c.id = o.cart_id
+     WHERE o.id = $1`,
+    orderId,
+  )
+  const order = rows[0]
+  if (!order) throw new Error(`Order ${orderId} not found`)
+
+  const lines = await buildOrderLines(order)
+  return generateReceiptPdf(
+    order,
+    { email: order.email },
+    { modelName: order.modelName, variantLabel: order.variantLabel },
+    lines,
+  )
+}
+
+module.exports = {
+  generateReceiptPdf,
+  generateReceiptPdfForOrder,
+  renderReceiptEmail,
+  sendOrderReceipt,
+}

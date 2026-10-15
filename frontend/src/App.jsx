@@ -35,6 +35,7 @@ import AccessoryFormPage from './pages/admin/AccessoryFormPage'
 import Reports from './pages/admin/Reports'
 import Settings from './pages/admin/Settings'
 import MyOrders from './pages/MyOrders'
+import OrderTracking from './pages/OrderTracking'
 import MyRequests from './pages/MyRequests'
 import MyConfigurations from './pages/MyConfigurations'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -88,6 +89,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['client', 'admin']}>
             <MyOrders />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-orders/:id"
+        element={
+          <ProtectedRoute allowedRoles={['client', 'admin']}>
+            <OrderTracking />
           </ProtectedRoute>
         }
       />

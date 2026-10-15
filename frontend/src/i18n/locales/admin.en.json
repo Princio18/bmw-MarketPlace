@@ -166,7 +166,33 @@
     "processingPending": "Pending",
     "processingReady": "Ready",
     "processingDelivered": "Delivered",
-    "processingCancelled": "Cancelled"
+    "processingCancelled": "Cancelled",
+    "updateStatus": "Update status",
+    "viewDetail": "View details",
+    "detailTitle": "Order {{ref}}",
+    "close": "Close",
+    "reference": "Reference",
+    "handover": "Handover",
+    "handoverDate": "Handover date",
+    "vin": "VIN",
+    "historyTitle": "Status history",
+    "historyEmpty": "No history recorded.",
+    "changedBy": "by {{email}}",
+    "statusModal": {
+      "title": "Update status",
+      "currentLabel": "Current status",
+      "newLabel": "New status",
+      "vinLabel": "VIN",
+      "vinHint": "17 characters, without I, O or Q.",
+      "handoverAtLabel": "Handover date and time",
+      "noteLabel": "Note (optional)",
+      "cancelWarning": "You are about to cancel this order. This action is final and does not trigger a refund.",
+      "noTransitions": "No further status change is possible.",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "saving": "Saving.",
+      "error": "Unable to update the status."
+    }
   },
   "requests": {
     "title": "Requests",
@@ -274,7 +300,15 @@
     "offerValidUntil": "Valid until {{date}}"
   },
   "payment": {
-    "title": "Payment"
+    "title": "Payment",
+    "stripeBalance": {
+      "title": "Stripe balance",
+      "available": "Available",
+      "pending": "Pending",
+      "loading": "Loading balance.",
+      "unavailable": "Unavailable",
+      "currency": "Currency"
+    }
   },
   "settings": {
     "title": "Settings",

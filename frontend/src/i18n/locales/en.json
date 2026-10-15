@@ -317,7 +317,10 @@
   },
   "orderConfirmation": {
     "title": "Thank you for your purchase!",
-    "message": "Your payment has been received and a receipt has been sent to your email address."
+    "message": "Your payment has been received and a receipt has been sent to your email address.",
+    "confirming": "Confirming your payment…",
+    "processing": "Your payment is being processed. You will receive an email shortly.",
+    "viewOrder": "View my order"
   },
   "adminOrders": {
     "totalRevenue": "Total revenue",
@@ -459,6 +462,7 @@
     "empty": "You don't have any orders yet.",
     "amount": "Amount",
     "date": "Date",
+    "viewOrder": "View order",
     "leaveReview": "Leave a review",
     "rating": "Rating",
     "commentPlaceholder": "Share your experience with the vehicle (optional)",
@@ -479,6 +483,30 @@
       "processingCancelled": "Cancelled"
     }
   },
+  "orderTracking": {
+    "title": "Order tracking",
+    "loading": "Loading your order.",
+    "error": "Unable to load this order. Please try again.",
+    "backToOrders": "Back to my orders",
+    "reference": "Reference",
+    "vehicle": "Your vehicle",
+    "handover": "Handover",
+    "retailer": "BMW Centre",
+    "handoverDate": "Handover date",
+    "vin": "VIN",
+    "toBeConfirmed": "To be confirmed",
+    "price": "Price details",
+    "total": "Total",
+    "downloadReceipt": "Download receipt",
+    "downloadingReceipt": "Preparing.",
+    "cancelledBanner": "This order has been cancelled.",
+    "steps": {
+      "paid": "Paid",
+      "pending": "In preparation",
+      "ready": "Ready for handover",
+      "delivered": "Delivered"
+    }
+  },
   "myRequests": {
     "title": "My requests",
     "loading": "Loading your requests…",
@@ -488,6 +516,7 @@
     "date": "Date",
     "dealer": "BMW Centre",
     "editDetails": "Edit details",
+    "viewOffer": "View offer",
     "status": {
       "new": "Received",
       "contacted": "We've been in touch",

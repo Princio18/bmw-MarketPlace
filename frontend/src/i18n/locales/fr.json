@@ -317,7 +317,10 @@
   },
   "orderConfirmation": {
     "title": "Merci pour votre achat !",
-    "message": "Votre paiement a été reçu et un reçu a été envoyé à votre adresse e-mail."
+    "message": "Votre paiement a été reçu et un reçu a été envoyé à votre adresse e-mail.",
+    "confirming": "Vérification de votre paiement…",
+    "processing": "Votre paiement est en cours de traitement. Vous recevrez un e-mail sous peu.",
+    "viewOrder": "Voir ma commande"
   },
   "adminOrders": {
     "totalRevenue": "Revenu total",
@@ -459,6 +462,7 @@
     "empty": "Vous n'avez pas encore de commande.",
     "amount": "Montant",
     "date": "Date",
+    "viewOrder": "Voir la commande",
     "leaveReview": "Laisser un avis",
     "rating": "Note",
     "commentPlaceholder": "Partagez votre expérience avec le véhicule (facultatif)",
@@ -479,6 +483,30 @@
       "processingCancelled": "Annulée"
     }
   },
+  "orderTracking": {
+    "title": "Suivi de commande",
+    "loading": "Chargement de votre commande.",
+    "error": "Impossible de charger cette commande. Veuillez réessayer.",
+    "backToOrders": "Retour à mes commandes",
+    "reference": "Référence",
+    "vehicle": "Votre véhicule",
+    "handover": "Remise",
+    "retailer": "Centre BMW",
+    "handoverDate": "Date de remise",
+    "vin": "VIN",
+    "toBeConfirmed": "À confirmer",
+    "price": "Détail du prix",
+    "total": "Total",
+    "downloadReceipt": "Télécharger le reçu",
+    "downloadingReceipt": "Préparation.",
+    "cancelledBanner": "Cette commande a été annulée.",
+    "steps": {
+      "paid": "Payé",
+      "pending": "En préparation",
+      "ready": "Prête pour la remise",
+      "delivered": "Livrée"
+    }
+  },
   "myRequests": {
     "title": "Mes demandes",
     "loading": "Chargement de vos demandes…",
@@ -488,6 +516,7 @@
     "date": "Date",
     "dealer": "Centre BMW",
     "editDetails": "Modifier mes coordonnées",
+    "viewOffer": "Voir l'offre",
     "status": {
       "new": "Reçue",
       "contacted": "Nous vous avons contacté",

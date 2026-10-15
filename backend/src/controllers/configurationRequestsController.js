@@ -236,7 +236,10 @@ async function listMyRequests(req, res) {
        v.variant_label AS "variantLabel",
        '/api/vehicles/' || v.id || '/image?v=' || COALESCE((EXTRACT(EPOCH FROM v.image_updated_at) * 1000)::bigint, 0) AS "image",
        d.name AS "dealerName",
-       d.city AS "dealerCity"
+       d.city AS "dealerCity",
+       (SELECT o.id FROM offers o
+          WHERE o.request_id = r.id AND o.status = 'active'
+          ORDER BY o.created_at DESC LIMIT 1) AS "offerId"
      FROM configuration_requests r
      JOIN vehicles v ON v.id = r.vehicle_id
      LEFT JOIN dealers d ON d.id = r.preferred_dealer_id

@@ -38,6 +38,7 @@ async function loadOwnedOffer(id, user) {
        r.user_id AS "requestUserId",
        r.email AS "requestEmail",
        r.configuration_data AS "configurationData",
+       r.preferred_dealer_id AS "preferredDealerId",
        v.model_name AS "modelName",
        v.variant_label AS "variantLabel",
        v.image_updated_at AS "imageUpdatedAt"
@@ -112,6 +113,9 @@ async function checkoutOffer(req, res) {
       currency: offer.currency || 'GBP',
       status: 'pending',
       price_breakdown: offer.price_breakdown,
+      // Centre de remise préféré saisi par le client sur la demande ; point de
+      // départ du suivi post-paiement (modifiable ensuite par un admin).
+      handover_dealer_id: offer.preferredDealerId || null,
     },
     select: { id: true },
   })
@@ -129,7 +133,7 @@ async function checkoutOffer(req, res) {
         quantity: 1,
       },
     ],
-    success_url: `${FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${FRONTEND_URL}/order-confirmation?session_id={CHECKOUT_SESSION_ID}&order=${order.id}`,
     cancel_url: `${FRONTEND_URL}/offers/${offer.id}`,
     metadata: { orderId: order.id, offerId: offer.id },
   })

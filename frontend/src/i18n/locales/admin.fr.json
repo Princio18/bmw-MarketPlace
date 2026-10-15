@@ -166,7 +166,33 @@
     "processingPending": "En attente",
     "processingReady": "Prête",
     "processingDelivered": "Livrée",
-    "processingCancelled": "Annulée"
+    "processingCancelled": "Annulée",
+    "updateStatus": "Mettre à jour le statut",
+    "viewDetail": "Voir le détail",
+    "detailTitle": "Commande {{ref}}",
+    "close": "Fermer",
+    "reference": "Référence",
+    "handover": "Remise",
+    "handoverDate": "Date de remise",
+    "vin": "VIN",
+    "historyTitle": "Historique des statuts",
+    "historyEmpty": "Aucun historique enregistré.",
+    "changedBy": "par {{email}}",
+    "statusModal": {
+      "title": "Mettre à jour le statut",
+      "currentLabel": "Statut actuel",
+      "newLabel": "Nouveau statut",
+      "vinLabel": "VIN",
+      "vinHint": "17 caractères, sans I, O ni Q.",
+      "handoverAtLabel": "Date et heure de remise",
+      "noteLabel": "Note (facultative)",
+      "cancelWarning": "Vous êtes sur le point d'annuler cette commande. Cette action est définitive et ne déclenche aucun remboursement.",
+      "noTransitions": "Aucun changement de statut n'est possible.",
+      "cancel": "Annuler",
+      "confirm": "Confirmer",
+      "saving": "Enregistrement.",
+      "error": "Impossible de mettre à jour le statut."
+    }
   },
   "requests": {
     "title": "Demandes",
@@ -274,7 +300,15 @@
     "offerValidUntil": "Valable jusqu’au {{date}}"
   },
   "payment": {
-    "title": "Paiement"
+    "title": "Paiement",
+    "stripeBalance": {
+      "title": "Solde Stripe",
+      "available": "Disponible",
+      "pending": "En attente",
+      "loading": "Chargement du solde.",
+      "unavailable": "Indisponible",
+      "currency": "Devise"
+    }
   },
   "settings": {
     "title": "Paramètres",

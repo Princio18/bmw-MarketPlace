@@ -138,7 +138,15 @@ function MyRequests() {
                       )}
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {request.offerId && (
+                        <Link
+                          to={`/offers/${request.offerId}`}
+                          className="inline-block rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                        >
+                          {t('myRequests.viewOffer')}
+                        </Link>
+                      )}
                       <Link
                         to={`/configure/${request.vehicleId}/confirm-request`}
                         state={{ requestId: request.id }}
