@@ -221,7 +221,7 @@ async function refundOrder(req, res) {
   if (!stripe) {
     return res
       .status(500)
-      .json({ error: 'Le paiement n’est pas configuré (STRIPE_SECRET_KEY manquant).' })
+      .json({ error: 'Paiement non configuré sur ce serveur.' })
   }
 
   const order = await prisma.orders.findFirst({

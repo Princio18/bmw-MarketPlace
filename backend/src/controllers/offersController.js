@@ -144,7 +144,7 @@ async function checkoutOffer(req, res) {
   if (!stripe) {
     return res
       .status(500)
-      .json({ error: 'Le paiement n’est pas configuré (STRIPE_SECRET_KEY manquant).' })
+      .json({ error: 'Paiement non configuré sur ce serveur.' })
   }
   if (req.body?.acceptTerms !== true) {
     return res.status(400).json({ error: 'Vous devez accepter les conditions.' })
